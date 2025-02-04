@@ -1,7 +1,7 @@
 # user-movable-media-downloader
 
-Lightweight application intended to be simple, portable and runnable in any user-restricted environment.
-For more detailed technical information, check out the [Developer document](./DEV.md).
+Lightweight application intended to be simple, portable and runnable in any modern Windows user-restricted environment.
+For more detailed technical information, check out the [Developer document](./docs/DEV.md).
 
 ### Prerequisites
 - PowerShell 5.1 (built-in to Windows 10 and above)

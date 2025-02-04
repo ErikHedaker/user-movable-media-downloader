@@ -1,5 +1,8 @@
-. .\src\functions.ps1
+param(
+    $ProjectRoot = $(throw 'ProjectRoot is required')
+)
 
+. .\src\functions.ps1 $ProjectRoot
 function Initialize-ProjectApplication {
     [CmdletBinding()]
     param()
@@ -9,42 +12,39 @@ function Initialize-ProjectApplication {
             [PSCustomObject]@{
                 Uri    = 'https://github.com/yt-dlp/yt-dlp/releases/latest/download/yt-dlp.exe'
                 Name   = 'yt-dlp'
-                Path   = ''
                 Filter = 'yt-dlp.exe'
                 Pass   = { $PSItem }
+                Path   = ''
             },
             [PSCustomObject]@{
                 Uri    = 'https://github.com/BtbN/FFmpeg-Builds/releases/latest/download/ffmpeg-master-latest-win64-lgpl.zip'
                 Name   = 'ffmpeg'
-                Path   = ''
                 Filter = 'ff*.exe'
                 Pass   = { $PSItem | Export-Archive }
-            },
+                Path   = ''
+            }
+            <#
             [PSCustomObject]@{
                 Uri    = 'https://github.com/ip7z/7zip/releases/latest/download/7zr.exe'
                 Name   = '7zr'
-                Path   = ''
                 Filter = '7zr.exe'
                 Pass   = { $PSItem }
+                Path   = ''
             }
+            #>
         )
     }
 
     process {
-        $MyInvocation.MyCommand.Name | Write-Host
-        Set-Location "$PSScriptRoot\.."
-        Set-Variable ProgressPreference SilentlyContinue
-        Set-Variable VerbosePreference Continue
-        Set-Variable ErrorActionPreference Inquire
-        #$Unavailable = $_ | Test-AppMissing
-        #if ()
+        Write-FunctionVerbose
 
-        $tmp = Initialize-Directory '.\tmp'
-        $lib = Initialize-Directory '.\lib'
-        $Applications | Request-App $tmp | Move-Files $lib | Add-EnvPathUser
-    }
-
-    end {
-        Clear-Directory $tmp
+        if ($Applications | Test-AnyAppMissing) {
+            $tmp = Initialize-Directory '.\tmp'
+            $lib = Initialize-Directory '.\lib'
+            Clear-Directory $tmp
+            Clear-Directory $lib
+            $Applications | Request-App $tmp | Move-Files $lib | Add-EnvPathUser
+            Clear-Directory $tmp
+        }
     }
 }
