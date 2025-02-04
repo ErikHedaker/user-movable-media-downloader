@@ -2,7 +2,6 @@ param(
     $ProjectRoot = $(throw 'ProjectRoot is required')
 )
 
-. .\src\functions.ps1 $ProjectRoot
 function Initialize-ProjectApplication {
     [CmdletBinding()]
     param()
@@ -10,17 +9,17 @@ function Initialize-ProjectApplication {
     begin {
         $Applications = @(
             [PSCustomObject]@{
-                Uri    = 'https://github.com/yt-dlp/yt-dlp/releases/latest/download/yt-dlp.exe'
-                Name   = 'yt-dlp'
-                Filter = 'yt-dlp.exe'
-                Pass   = { $PSItem }
-                Path   = ''
-            },
-            [PSCustomObject]@{
                 Uri    = 'https://github.com/BtbN/FFmpeg-Builds/releases/latest/download/ffmpeg-master-latest-win64-lgpl.zip'
                 Name   = 'ffmpeg'
                 Filter = 'ff*.exe'
                 Pass   = { $PSItem | Export-Archive }
+                Path   = ''
+            },
+            [PSCustomObject]@{
+                Uri    = 'https://github.com/yt-dlp/yt-dlp/releases/latest/download/yt-dlp.exe'
+                Name   = 'yt-dlp'
+                Filter = 'yt-dlp.exe'
+                Pass   = { $PSItem }
                 Path   = ''
             }
             <#
@@ -37,8 +36,9 @@ function Initialize-ProjectApplication {
 
     process {
         Write-FunctionVerbose
+        $Missing = $Applications | Test-AnyAppMissing
 
-        if ($Applications | Test-AnyAppMissing) {
+        if ($Missing) {
             $tmp = Initialize-Directory '.\tmp'
             $lib = Initialize-Directory '.\lib'
             Clear-Directory $tmp

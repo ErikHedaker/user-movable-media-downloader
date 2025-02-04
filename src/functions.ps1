@@ -192,12 +192,18 @@ function Request-App {
         Write-FunctionVerbose
         $Name = [System.IO.Path]::GetFileName($Uri)
         $Path = "$Parent\$Name"
-        $RetriesLeft = $Retry
+        $RemainingRetry = $Retry
+        #$WebClient = New-Object System.Net.WebClient
 
-        while ($RetriesLeft -gt 0) {
+        while ($RemainingRetry -gt 0) {
             try {
-                Write-Host "Requesting[$($App.Uri)]`n`nPlease wait...`n"
-                Invoke-WebRequest $Uri -OutFile $Path | Out-Null
+                Write-Host "Downloading[$($App.Uri)]:`n`nPlease wait...`n"
+                #$WebClient.DownloadFile($Uri, $Path)
+                #Invoke-RestMethod -ContentType "application/octet-stream" -Uri $Uri -OutFile $Path | Out-Null
+                #Invoke-WebRequest -Uri $Uri -OutFile $Path | Out-Null
+                #Start-BitsTransfer -Source $Uri -Destination $Path -Priority Foreground
+                curl.exe -o $Path $Uri
+                Write-Host "curl.exe finished"
                 break
             } catch {
                 Write-Host "Error: $_"
@@ -206,7 +212,7 @@ function Request-App {
         }
 
         $App.Path = $Path
-        Write-VariableVerbose @{ Name = $Name; Path = $Path; RetriesLeft = $RetriesLeft }
+        Write-VariableVerbose @{ Name = $Name; Path = $Path; RemainingRetry = $RemainingRetry }
         $App.Pass.Invoke()
     }
 }
@@ -246,8 +252,9 @@ function Move-Files {
     [CmdletBinding()]
     param(
         [Parameter(
+            Mandatory,
             Position = 0
-        )][string]$Destination = $ProjectRoot,
+        )][string]$Destination,
         [Parameter(
             ValueFromPipelineByPropertyName
         )][string]$Filter,
@@ -263,9 +270,10 @@ function Move-Files {
         Write-FunctionVerbose
         Get-ChildItem $Path $Filter -Recurse | ForEach-Object {
             $Source = $PSItem.FullName
-            Write-Host "Moving Source[$Source] -->`nDestination[$Destination]"
+            Write-Host "Moving directory from Source to Destination:`n[$Source]`n[$Destination]"
             Move-Item -Path $Source $Destination -Force
         }
+        Write-VariableVerbose @{ Destination = $Destination }
         $Destination
     }
 }
@@ -275,31 +283,34 @@ function Get-EnvPath {
 
     process {
         Write-FunctionVerbose
-        $Result = (
-            '{0};{1}' -f
-            [System.Environment]::GetEnvironmentVariable('Path', 'Machine'),
-            [System.Environment]::GetEnvironmentVariable('Path', 'User')
-        )
-        Write-VariableVerbose @{ Result = $Result }
-        $Result
+        $EnvPathSystem = [System.Environment]::GetEnvironmentVariable('Path', 'Machine')
+        $EnvPathUser = [System.Environment]::GetEnvironmentVariable('Path', 'User')
+        $EnvPath = "$EnvPathSystem;$EnvPathUser"
+        Write-VariableVerbose @{ EnvPathSystem = $EnvPathSystem; EnvPathUser = $EnvPathUser; EnvPath = $EnvPath }
+        $EnvPath
     }
 }
 function Add-EnvPathUser {
     [CmdletBinding()]
     param(
         [Parameter(
+            Mandatory,
             ValueFromPipeline
-        )][string]$Path = $ProjectRoot
+        )][string]$Entry
     )
 
     process {
         Write-FunctionVerbose
+        $EnvPath = Get-EnvPath
 
-        if ((Get-EnvPath) -notlike "*$Path*") {
-            $EnvPathUser = [System.Environment]::GetEnvironmentVariable('Path', 'User') + "$Path;"
+        $Contain = $EnvPath -like "*$Entry*"
+        $Append = "$Entry;"
+
+        if (-Not $Contain) {
+            $EnvPathUser = [System.Environment]::GetEnvironmentVariable('Path', 'User') + $Append
             [System.Environment]::SetEnvironmentVariable('Path', $EnvPathUser, 'User')
             $Env:Path = Get-EnvPath
-            Write-Host "Added user environment variable Path[$Path]"
+            Write-Host "Added Path[$Entry] to user environment variables"
         }
     }
 }
@@ -356,16 +367,16 @@ function Show-SelectDirectory() {
         $UserSelectDirectory = New-Object System.Windows.Forms.FolderBrowserDialog
         $UserSelectDirectory.SelectedPath = $Path
         $UserSelectDirectory.ShowNewFolderButton = $true
-        $Prompt = 'Select a destination directory for downloads:'
+        $Prompt = 'Opening [System.Windows.Forms.FolderBrowserDialog] for selecting download path'
         Write-Host $Prompt
         $UserSelectDirectory.Description = $Prompt
         $Result = $UserSelectDirectory.ShowDialog() -eq [System.Windows.Forms.DialogResult]::OK
 
         if ($Result) {
             $Path = $UserSelectDirectory.SelectedPath
-            Write-Host "Downloading into Destination[$Path]"
+            Write-Host "User selected download Path[$Path]"
         } else {
-            Write-Host "Invalid selected Path. Downloading into default Destination[$Path]"
+            Write-Host "Invalid path selected. Using default Path[$Path]"
         }
 
         Write-VariableVerbose @{ Result = $Result; Path = $Path }
@@ -387,7 +398,12 @@ function Show-Downloads {
     process {
         $Download | ForEach-Object {
             $Num += 1
-            "    $Num`t- $_"
+
+            if ($Num -eq 1) {
+                'Completed downloads:'
+            }
+
+            ": $Num`t- $_"
         } | Write-Host
     }
 
