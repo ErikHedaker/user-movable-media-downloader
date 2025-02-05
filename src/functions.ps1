@@ -37,7 +37,7 @@ function Exit-ProjectError {
 
     process {
         Write-VerboseFunction
-        Write-Host "Error: $Message"
+        Write-Host "Fatal error:`n$Message" -ForegroundColor DarkYellow
         Pause
         Exit 1
     }
@@ -72,7 +72,7 @@ function Resolve-ProjectPath {
         $Path = Resolve-Path $Path
 
         if (-Not (Assert-ProjectPath $Path)) {
-            Exit-ProjectError "Path[$Path] is outside the project root path"
+            Exit-ProjectError "For safety, paths are only allowed within [ProjectRoot], [Path] is outside:`n[$ProjectRoot]`n[$Path]"
         }
 
         $Path
@@ -92,7 +92,7 @@ function Initialize-Directory {
 
         if (-Not (Test-Path $Path)) {
             $Path = (New-Item $Path -ItemType Directory).FullName
-            Write-Host "Added required Directory[$Path]"
+            Write-Host "Added [Directory]:`n[$Path]"
         }
 
         Resolve-ProjectPath $Path
@@ -106,7 +106,8 @@ function Clear-Directory {
             Position = 0,
             ValueFromPipeline
         )][string]$Path,
-        [switch]$WhatIf
+        [switch]$WhatIf,
+        [switch]$PassThru
     )
 
     process {
@@ -114,6 +115,11 @@ function Clear-Directory {
 
         if (Test-Path $Path) {
             Get-ChildItem $Path | Remove-Item -Recurse -WhatIf:$WhatIf
+            Write-Host "Cleared [Directory]:`n[$Path]"
+        }
+
+        if ($PassThru) {
+            $Path
         }
     }
 }
@@ -141,6 +147,7 @@ function Request-App {
 
     process {
         Write-VerboseFunction
+        $WebClient = New-Object System.Net.WebClient
         $Ext = [System.IO.Path]::GetExtension($Uri)
         $File = $App.Name + $Ext
         $Destination = "$Parent\$File"
@@ -149,13 +156,9 @@ function Request-App {
         while ($RemainingRetry -gt 0) {
             try {
                 Write-VerboseVariable @{ Destination = $Destination; Uri = $Uri }
-                Write-Host "Starting Download[$Uri]:`n`nPlease wait...`n"
-                # # Start-BitsTransfer -Source $Uri -Destination $Destination -Priority Foreground
-                # # Invoke-RestMethod -ContentType 'application/octet-stream' -Uri $Uri -OutFile $Destination | Out-Null
-                # Invoke-WebRequest -Uri $Uri -OutFile $Destination | Out-Null
-                # (New-Object System.Net.WebClient).DownloadFile($Uri, $Destination)
-                curl.exe -L -o $Destination $Uri
-                Write-Host "Finished Download[$Destination]"
+                Write-Host "Starting [Download]:`n[$Uri]:`n`nPlease wait...`n"
+                $WebClient.DownloadFile($Uri, $Destination)
+                Write-Host "Finished [Download]:`n[$Destination]"
                 break
             } catch {
                 Write-Host "Error: $_"
@@ -180,24 +183,15 @@ function Export-Archive {
         )][PSCustomObject]$App
     )
 
-    begin {
-        Add-Type -AssemblyName System.IO.Compression.FileSystem
-    }
-
     process {
         Write-VerboseFunction
         $Parent = Split-Path $Path -Parent
-        $Name = [System.IO.Path]::GetFileNameWithoutExtension($Path)
-        $Extract = "$Parent\$Name"
-        #Expand-Archive $Path -DestinationPath C:\Reference
-        <#
-        $dirname = (Get-Item $file).Basename
-        New-Item -Force -ItemType directory -Path $dirname
-        expand-archive $file -OutputPath $dirname -ShowProgress
-        #>
-        #[System.IO.Compression.ZipFile]::ExtractToDirectory($Path, $Extract)
-        $App.Path = $Extract
-        Write-VerboseVariable @{ Parent = $Parent; Name = $Name; Extract = $Extract }
+        $Name = $App.Name
+        $DestinationPath = "$Parent\$Name"
+        Expand-Archive $Path $DestinationPath -Force | Out-Host
+        Write-Host "Extracted [Archive] to [Destination]:`n[$Path]`n[$DestinationPath]"
+        Write-VerboseVariable @{ Parent = $Parent; Name = $Name; DestinationPath = $DestinationPath }
+        $App.Path = $DestinationPath
         $App
     }
 }
@@ -226,8 +220,8 @@ function Move-Files {
         Write-VerboseFunction
         Get-ChildItem $Path $Filter -Recurse | ForEach-Object {
             $Source = $PSItem.FullName
-            Write-Host "Moving directory from Source to Destination:`n[$Source]`n[$Destination]"
             Move-Item -Path $Source $Destination -Force
+            Write-Host "Moved [Source] to [Destination]:`n[$Source]`n[$Destination]"
         }
         Write-VerboseVariable @{ Destination = $Destination }
         $Destination
@@ -263,11 +257,11 @@ function Add-EnvPathUser {
             $Updated = [System.Environment]::GetEnvironmentVariable('Path', 'User') + "$Entry;"
             [System.Environment]::SetEnvironmentVariable('Path', $Updated, 'User')
             $Env:Path = Get-EnvPath
-            Write-Host "Added Path[$Entry] to user environment variables"
+            Write-Host "Added [Path] to user environment variables:`n[$Entry]"
         }
     }
 }
-function Test-AppExist {
+function Test-AppAvailable {
     [CmdletBinding()]
     param(
         [Parameter(
@@ -278,12 +272,12 @@ function Test-AppExist {
 
     process {
         Write-VerboseFunction
-        $Exist = [bool](Get-Command $Name -CommandType Application -ErrorAction Ignore)
-        Write-VerboseVariable @{ Exist = $Exist }
-        $Exist
+        $Available = [bool](Get-Command $Name -CommandType Application -ErrorAction Ignore)
+        Write-VerboseVariable @{ Available = $Available }
+        $Available
     }
 }
-function Test-AnyAppMissing {
+function Test-AppAnyUnavailable {
     [CmdletBinding()]
     param(
         [Parameter(
@@ -293,16 +287,16 @@ function Test-AnyAppMissing {
     )
 
     begin {
-        $Exists = [System.Collections.Generic.List[bool]]::new()
+        $Available = [System.Collections.Generic.List[bool]]::new()
     }
 
     process {
         Write-VerboseFunction
-        $Exists.Add((Test-AppExist $Name))
+        $Available.Add((Test-AppAvailable $Name))
     }
 
     end {
-        $Exists -Contains $false
+        $Available -Contains $false
     }
 }
 function Show-SelectDirectory {
@@ -322,16 +316,16 @@ function Show-SelectDirectory {
         $UserSelectDirectory = New-Object System.Windows.Forms.FolderBrowserDialog
         $UserSelectDirectory.SelectedPath = $Path
         $UserSelectDirectory.ShowNewFolderButton = $true
-        $Prompt = 'Opening [System.Windows.Forms.FolderBrowserDialog] for selecting download destination'
+        $Prompt = 'Opening [System.Windows.Forms.FolderBrowserDialog] to select download directory:'
         Write-Host $Prompt
-        $UserSelectDirectory.Description = 'Select download destination'
+        $UserSelectDirectory.Description = 'Select download directory'
         $Result = $UserSelectDirectory.ShowDialog() -eq [System.Windows.Forms.DialogResult]::OK
 
         if ($Result) {
             $Path = $UserSelectDirectory.SelectedPath
-            Write-Host "User selected download Path[$Path]"
+            Write-Host "User selected download [Directory]:`n[$Path]"
         } else {
-            Write-Host "Invalid path selected. Using default Path[$Path]"
+            Write-Host "Invalid path selected. Using default [Directory]:`n[$Path]"
         }
 
         Write-VerboseVariable @{ Result = $Result; Path = $Path }
@@ -365,5 +359,24 @@ function Show-Downloads {
 
     end {
         Write-Host ''
+    }
+}
+
+function Show-SelectCommandArguments {
+    [CmdletBinding()]
+    param()
+
+    process {
+        $Prompt = "[1] Download video with audio`n[2] Download only audio`nChoice"
+        $Commands = @{
+            1 = @()
+            2 = @('-x', '--audio-format', 'mp3', '--audio-quality', '0')
+        }
+        $Result = $null
+        do {
+            $Result = Read-Host $Prompt
+        } while ($null -eq $Commands.$Result)
+
+        $Commands.$Result
     }
 }

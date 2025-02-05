@@ -27,13 +27,11 @@ function Initialize-ProjectApplication {
 
     process {
         Write-VerboseFunction
-        $Missing = $Applications | Test-AnyAppMissing
+        $Unavailable = $true # $Applications | Test-AppAnyUnavailable
 
-        if ($Missing) {
-            $tmp = Initialize-Directory '.\tmp'
-            $lib = Initialize-Directory '.\lib'
-            Clear-Directory $tmp
-            Clear-Directory $lib
+        if ($Unavailable) {
+            $tmp = Initialize-Directory '.\tmp' | Clear-Directory -PassThru
+            $lib = Initialize-Directory '.\lib' | Clear-Directory -PassThru
             $Applications | Request-App $tmp | Move-Files $lib | Add-EnvPathUser
             Clear-Directory $tmp
         }
