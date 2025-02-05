@@ -2,7 +2,7 @@ param(
     $ProjectRoot = $(throw 'ProjectRoot is required')
 )
 
-function Write-FunctionVerbose {
+function Write-VerboseFunction {
     [CmdletBinding()]
     param()
 
@@ -13,10 +13,11 @@ function Write-FunctionVerbose {
         Write-Verbose "$Name`n$Arguments"
     }
 }
-function Write-VariableVerbose {
+function Write-VerboseVariable {
     [CmdletBinding()]
     param(
         [Parameter(
+            Mandatory,
             ValueFromRemainingArguments
         )]$Arguments
     )
@@ -29,35 +30,16 @@ function Exit-ProjectError {
     [CmdletBinding()]
     param(
         [Parameter(
+            Mandatory,
             Position = 0
         )][string]$Message
     )
 
     process {
-        Write-FunctionVerbose
+        Write-VerboseFunction
         Write-Host "Error: $Message"
         Pause
         Exit 1
-    }
-}
-function Assert-ParentPath {
-    [CmdletBinding()]
-    param(
-        [Parameter(
-            Mandatory,
-            Position = 0
-        )][string]$Path,
-        [Parameter(
-            Mandatory,
-            Position = 1
-        )][string]$Parent
-    )
-
-    process {
-        Write-FunctionVerbose
-        $Assert = $Parent -eq (Split-Path $Path -Leaf)
-        Write-VariableVerbose @{ Path = $Path; Parent = $Parent; Assert = $Assert }
-        $Assert
     }
 }
 function Assert-ProjectPath {
@@ -70,9 +52,9 @@ function Assert-ProjectPath {
     )
 
     process {
-        Write-FunctionVerbose
-        $Assert = $Path -like "$ProjectRoot*"
-        Write-VariableVerbose @{ Path = $Path; ProjectRoot = $ProjectRoot; Assert = $Assert }
+        Write-VerboseFunction
+        $Assert = $Path -Like "$ProjectRoot*"
+        Write-VerboseVariable @{ Path = $Path; ProjectRoot = $ProjectRoot; Assert = $Assert }
         $Assert
     }
 }
@@ -86,62 +68,27 @@ function Resolve-ProjectPath {
     )
 
     process {
-        Write-FunctionVerbose
+        Write-VerboseFunction
         $Path = Resolve-Path $Path
 
         if (-Not (Assert-ProjectPath $Path)) {
             Exit-ProjectError "Path[$Path] is outside the project root path"
         }
 
-        <#
-        if (-Not (Assert-ParentPath $Path 'src')) {
-            Exit-ProjectError "Path[$Path] does not match the correct parent directory"
-        }
-        #>
-
         $Path
     }
 }
-<#
-function Protect-RootPath {
-    [CmdletBinding()]
-    param(
-        [Parameter(
-            ValueFromPipeline,
-            Mandatory
-        )][string]$Path
-    )
-
-    process {
-        Write-FunctionVerbose
-        $Path = Resolve-Path $Path
-        $Root = [System.IO.Path]::GetPathRoot($Path)
-        $Test = $Path -eq $Root
-        Write-Verbose "Path is Root: $Test"
-        #'Path', 'Root', 'Test' | Get-Variable | Select-Object -Property * | Write-Verbose
-        Write-VariableVerbose @{ Path = $Path; Root = $Root; Test = $Test }
-
-        if ($Test) {
-            #Throw "Path[$Path] is a system root directory which can lead to unwanted system changes"
-            Write-Host "Path[$Path] is a system root directory which can lead to unwanted system changes"
-            Exit 1
-        } else {
-            Write-Host "Path[$Path] is valid"
-            $Path
-        }
-    }
-}
-#>
 function Initialize-Directory {
     [CmdletBinding()]
     param(
         [Parameter(
+            Mandatory,
             Position = 0
-        )][string]$Path = $ProjectRoot
+        )][string]$Path
     )
 
     process {
-        Write-FunctionVerbose
+        Write-VerboseFunction
 
         if (-Not (Test-Path $Path)) {
             $Path = (New-Item $Path -ItemType Directory).FullName
@@ -155,14 +102,15 @@ function Clear-Directory {
     [CmdletBinding()]
     param(
         [parameter(
+            Mandatory,
             Position = 0,
             ValueFromPipeline
-        )][string]$Path = $ProjectRoot,
+        )][string]$Path,
         [switch]$WhatIf
     )
 
     process {
-        Write-FunctionVerbose
+        Write-VerboseFunction
 
         if (Test-Path $Path) {
             Get-ChildItem $Path | Remove-Item -Recurse -WhatIf:$WhatIf
@@ -173,37 +121,41 @@ function Request-App {
     [CmdletBinding()]
     param(
         [Parameter(
+            Mandatory,
             Position = 0
-        )][string]$Parent = $ProjectRoot,
+        )][string]$Parent,
         [Parameter(
+            Mandatory,
             ValueFromPipelineByPropertyName
         )][string]$Uri,
         [Parameter(
+            Mandatory,
             ValueFromPipeline
         )][PSCustomObject]$App
     )
 
     begin {
-        $Retry = 5
-        $Delay = 200
+        $Retry = 4
+        $Delay = 500
     }
 
     process {
-        Write-FunctionVerbose
-        $Name = [System.IO.Path]::GetFileName($Uri)
-        $Path = "$Parent\$Name"
+        Write-VerboseFunction
+        $Ext = [System.IO.Path]::GetExtension($Uri)
+        $File = $App.Name + $Ext
+        $Destination = "$Parent\$File"
         $RemainingRetry = $Retry
-        #$WebClient = New-Object System.Net.WebClient
 
         while ($RemainingRetry -gt 0) {
             try {
-                Write-Host "Downloading[$($App.Uri)]:`n`nPlease wait...`n"
-                #$WebClient.DownloadFile($Uri, $Path)
-                #Invoke-RestMethod -ContentType "application/octet-stream" -Uri $Uri -OutFile $Path | Out-Null
-                #Invoke-WebRequest -Uri $Uri -OutFile $Path | Out-Null
-                #Start-BitsTransfer -Source $Uri -Destination $Path -Priority Foreground
-                curl.exe -o $Path $Uri
-                Write-Host "curl.exe finished"
+                Write-VerboseVariable @{ Destination = $Destination; Uri = $Uri }
+                Write-Host "Starting Download[$Uri]:`n`nPlease wait...`n"
+                # # Start-BitsTransfer -Source $Uri -Destination $Destination -Priority Foreground
+                # # Invoke-RestMethod -ContentType 'application/octet-stream' -Uri $Uri -OutFile $Destination | Out-Null
+                # Invoke-WebRequest -Uri $Uri -OutFile $Destination | Out-Null
+                # (New-Object System.Net.WebClient).DownloadFile($Uri, $Destination)
+                curl.exe -L -o $Destination $Uri
+                Write-Host "Finished Download[$Destination]"
                 break
             } catch {
                 Write-Host "Error: $_"
@@ -211,8 +163,7 @@ function Request-App {
             }
         }
 
-        $App.Path = $Path
-        Write-VariableVerbose @{ Name = $Name; Path = $Path; RemainingRetry = $RemainingRetry }
+        $App.Path = $Destination
         $App.Pass.Invoke()
     }
 }
@@ -220,9 +171,11 @@ function Export-Archive {
     [CmdletBinding()]
     param(
         [Parameter(
+            Mandatory,
             ValueFromPipelineByPropertyName
-        )][string]$Path = $ProjectRoot,
+        )][string]$Path,
         [Parameter(
+            Mandatory,
             ValueFromPipeline
         )][PSCustomObject]$App
     )
@@ -232,19 +185,19 @@ function Export-Archive {
     }
 
     process {
-        Write-FunctionVerbose
+        Write-VerboseFunction
         $Parent = Split-Path $Path -Parent
         $Name = [System.IO.Path]::GetFileNameWithoutExtension($Path)
         $Extract = "$Parent\$Name"
-        #Expand-Archive -Path Draft.Zip -DestinationPath C:\Reference
+        #Expand-Archive $Path -DestinationPath C:\Reference
         <#
         $dirname = (Get-Item $file).Basename
         New-Item -Force -ItemType directory -Path $dirname
         expand-archive $file -OutputPath $dirname -ShowProgress
         #>
-        [System.IO.Compression.ZipFile]::ExtractToDirectory($Path, $Extract)
+        #[System.IO.Compression.ZipFile]::ExtractToDirectory($Path, $Extract)
         $App.Path = $Extract
-        Write-VariableVerbose @{ Parent = $Parent; Name = $Name; Extract = $Extract }
+        Write-VerboseVariable @{ Parent = $Parent; Name = $Name; Extract = $Extract }
         $App
     }
 }
@@ -256,24 +209,27 @@ function Move-Files {
             Position = 0
         )][string]$Destination,
         [Parameter(
+            Mandatory,
             ValueFromPipelineByPropertyName
         )][string]$Filter,
         [Parameter(
+            Mandatory,
             ValueFromPipelineByPropertyName
-        )][string]$Path = $ProjectRoot,
+        )][string]$Path,
         [Parameter(
+            Mandatory,
             ValueFromPipeline
         )][PSCustomObject]$App
     )
 
     process {
-        Write-FunctionVerbose
+        Write-VerboseFunction
         Get-ChildItem $Path $Filter -Recurse | ForEach-Object {
             $Source = $PSItem.FullName
             Write-Host "Moving directory from Source to Destination:`n[$Source]`n[$Destination]"
             Move-Item -Path $Source $Destination -Force
         }
-        Write-VariableVerbose @{ Destination = $Destination }
+        Write-VerboseVariable @{ Destination = $Destination }
         $Destination
     }
 }
@@ -282,11 +238,11 @@ function Get-EnvPath {
     param()
 
     process {
-        Write-FunctionVerbose
+        Write-VerboseFunction
         $EnvPathSystem = [System.Environment]::GetEnvironmentVariable('Path', 'Machine')
         $EnvPathUser = [System.Environment]::GetEnvironmentVariable('Path', 'User')
         $EnvPath = "$EnvPathSystem;$EnvPathUser"
-        Write-VariableVerbose @{ EnvPathSystem = $EnvPathSystem; EnvPathUser = $EnvPathUser; EnvPath = $EnvPath }
+        Write-VerboseVariable @{ EnvPathSystem = $EnvPathSystem; EnvPathUser = $EnvPathUser; EnvPath = $EnvPath }
         $EnvPath
     }
 }
@@ -300,15 +256,12 @@ function Add-EnvPathUser {
     )
 
     process {
-        Write-FunctionVerbose
-        $EnvPath = Get-EnvPath
-
-        $Contain = $EnvPath -like "*$Entry*"
-        $Append = "$Entry;"
+        Write-VerboseFunction
+        $Contain = (Get-EnvPath) -Like "*$Entry*"
 
         if (-Not $Contain) {
-            $EnvPathUser = [System.Environment]::GetEnvironmentVariable('Path', 'User') + $Append
-            [System.Environment]::SetEnvironmentVariable('Path', $EnvPathUser, 'User')
+            $Updated = [System.Environment]::GetEnvironmentVariable('Path', 'User') + "$Entry;"
+            [System.Environment]::SetEnvironmentVariable('Path', $Updated, 'User')
             $Env:Path = Get-EnvPath
             Write-Host "Added Path[$Entry] to user environment variables"
         }
@@ -318,15 +271,15 @@ function Test-AppExist {
     [CmdletBinding()]
     param(
         [Parameter(
-            Position = 0,
-            ValueFromPipelineByPropertyName
+            Mandatory,
+            Position = 0
         )][string]$Name
     )
 
     process {
-        Write-FunctionVerbose
+        Write-VerboseFunction
         $Exist = [bool](Get-Command $Name -CommandType Application -ErrorAction Ignore)
-        Write-VariableVerbose @{ Missing = $Missing }
+        Write-VerboseVariable @{ Exist = $Exist }
         $Exist
     }
 }
@@ -334,6 +287,7 @@ function Test-AnyAppMissing {
     [CmdletBinding()]
     param(
         [Parameter(
+            Mandatory,
             ValueFromPipelineByPropertyName
         )][string]$Name
     )
@@ -343,14 +297,15 @@ function Test-AnyAppMissing {
     }
 
     process {
+        Write-VerboseFunction
         $Exists.Add((Test-AppExist $Name))
     }
 
     end {
-        $Exists -contains $false
+        $Exists -Contains $false
     }
 }
-function Show-SelectDirectory() {
+function Show-SelectDirectory {
     [CmdletBinding()]
     param(
         [Parameter(
@@ -363,13 +318,13 @@ function Show-SelectDirectory() {
     }
 
     process {
-        Write-FunctionVerbose
+        Write-VerboseFunction
         $UserSelectDirectory = New-Object System.Windows.Forms.FolderBrowserDialog
         $UserSelectDirectory.SelectedPath = $Path
         $UserSelectDirectory.ShowNewFolderButton = $true
-        $Prompt = 'Opening [System.Windows.Forms.FolderBrowserDialog] for selecting download path'
+        $Prompt = 'Opening [System.Windows.Forms.FolderBrowserDialog] for selecting download destination'
         Write-Host $Prompt
-        $UserSelectDirectory.Description = $Prompt
+        $UserSelectDirectory.Description = 'Select download destination'
         $Result = $UserSelectDirectory.ShowDialog() -eq [System.Windows.Forms.DialogResult]::OK
 
         if ($Result) {
@@ -379,7 +334,7 @@ function Show-SelectDirectory() {
             Write-Host "Invalid path selected. Using default Path[$Path]"
         }
 
-        Write-VariableVerbose @{ Result = $Result; Path = $Path }
+        Write-VerboseVariable @{ Result = $Result; Path = $Path }
         $Path
     }
 }
@@ -396,6 +351,7 @@ function Show-Downloads {
     }
 
     process {
+        Write-VerboseFunction
         $Download | ForEach-Object {
             $Num += 1
 

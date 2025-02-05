@@ -9,7 +9,7 @@ function Initialize-ProjectApplication {
     begin {
         $Applications = @(
             [PSCustomObject]@{
-                Uri    = 'https://github.com/BtbN/FFmpeg-Builds/releases/latest/download/ffmpeg-master-latest-win64-lgpl.zip'
+                Uri    = 'https://github.com/BtbN/FFmpeg-Builds/releases/download/latest/ffmpeg-master-latest-win64-lgpl.zip'
                 Name   = 'ffmpeg'
                 Filter = 'ff*.exe'
                 Pass   = { $PSItem | Export-Archive }
@@ -22,20 +22,11 @@ function Initialize-ProjectApplication {
                 Pass   = { $PSItem }
                 Path   = ''
             }
-            <#
-            [PSCustomObject]@{
-                Uri    = 'https://github.com/ip7z/7zip/releases/latest/download/7zr.exe'
-                Name   = '7zr'
-                Filter = '7zr.exe'
-                Pass   = { $PSItem }
-                Path   = ''
-            }
-            #>
         )
     }
 
     process {
-        Write-FunctionVerbose
+        Write-VerboseFunction
         $Missing = $Applications | Test-AnyAppMissing
 
         if ($Missing) {

@@ -27,7 +27,7 @@ try {
     }
 }
 catch {
-    Write-Host "Caught error in [$PSScriptRoot]:`n$_"
+    Write-Host "`nCaught error in [$PSCommandPath]:`n`n$_`n" -ForegroundColor DarkYellow
     Pause
     Exit 1
 }
