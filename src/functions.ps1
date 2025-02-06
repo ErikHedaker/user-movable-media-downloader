@@ -112,9 +112,7 @@ function Request-App {
 
     process {
         $WebClient = New-Object System.Net.WebClient
-        $Ext = [System.IO.Path]::GetExtension($Uri)
-        $File = $App.Name + $Ext
-        $Destination = "$Parent\$File"
+        $Destination = '{0}\{1}{2}' -f $Parent, $App.Name, [System.IO.Path]::GetExtension($Uri)
         $RemainingRetry = $Retry
 
         while ($RemainingRetry -gt 0) {
@@ -131,10 +129,10 @@ function Request-App {
         }
 
         $App.Path = $Destination
-        $App.Pass.Invoke()
+        $App
     }
 }
-function Export-Archive {
+function Expand-IfArchive {
     [CmdletBinding()]
     param(
         [Parameter(
@@ -143,17 +141,27 @@ function Export-Archive {
         )][string]$Path,
         [Parameter(
             Mandatory,
+            ValueFromPipelineByPropertyName
+        )][string]$Name,
+        [Parameter(
+            Mandatory,
             ValueFromPipeline
         )][PSCustomObject]$App
     )
 
+    begin {
+        $Ext = @('.zip')
+    }
+
     process {
-        $Parent = Split-Path $Path -Parent
-        $Name = $App.Name
-        $DestinationPath = "$Parent\$Name"
-        Expand-Archive $Path $DestinationPath -Force
-        Write-Host "Extracted [Archive] to [Directory]:`n[$Path]`n[$DestinationPath]"
-        $App.Path = $DestinationPath
+        if ($Ext -contains [System.IO.Path]::GetExtension($Path)) {
+            $Parent = Split-Path $Path -Parent
+            $DestinationPath = "$Parent\$Name"
+            Expand-Archive $Path $DestinationPath -Force
+            Write-Host "Extracted [Archive] to [Directory]:`n[$Path]`n[$DestinationPath]"
+            $App.Path = $DestinationPath
+        }
+
         $App
     }
 }
