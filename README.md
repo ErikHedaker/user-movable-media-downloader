@@ -1,7 +1,8 @@
 # user-movable-media-downloader
 
 This is a lightweight application intended to be simple, portable and runnable in user-restricted Windows environments.
-For a more detailed description of this project together with common troubleshooting, view the [developer document](./docs/DEV.md).
+For a more detailed description of this project together with common troubleshooting:\
+View the [developer document](./docs/DEV.md)
 
 ## Prerequisites
 
@@ -10,12 +11,12 @@ For a more detailed description of this project together with common troubleshoo
 
 ## Installing the application
 
-#### If you do not have the project directory available
+#### If you do not have the project directory available (e.g. copy of project in a USB flash drive):
 
 1. Download the project files from GitHub (https://github.com/ErikHedaker/user-movable-media-downloader)
 2. Extract the downloaded ``.zip`` file to any directory
 
-#### When you have the project directory (which you can move/copy to any location)
+#### When you have the project directory (which you can move/copy to any location):
 
 3. Double-click the file ``start.cmd`` inside the project root directory ``\user-movable-media-downloader\``
 
