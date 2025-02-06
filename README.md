@@ -1,7 +1,7 @@
 # user-movable-media-downloader
 
 This is a lightweight application intended to be simple, portable and runnable in user-restricted Windows environments.
-For a more detailed description together with common troubleshooting, view the in-depth [developer document](./docs/DEV.md).
+For a more detailed description of this project together with common troubleshooting, view the [developer document](./docs/DEV.md).
 
 ## Prerequisites
 
