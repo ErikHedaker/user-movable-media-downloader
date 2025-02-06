@@ -68,15 +68,14 @@ So this project is intended to create an application with single entrypoint for 
 > To solve this issue, there are three options:
 >
 > #### Re-create the script file to generate a valid file signature.
->> Do the following steps:\
->> Right-click the file, select ``Edit``. This will show you the actual script code instead of attempting to run the file.\
->> Copy all of this text.\
+> Do the following steps:
+>> Right-click the file, select ``Edit``. This will show you the actual script code instead of attempting to run the file. Copy all of this text.\
 >> Create a new text file in the same directory (filename is not relevant). Paste the copied script code into this new text file.\
 >> Then rename file and specifically change the extension of the file from ``.txt`` to ``.cmd`` (``.bat`` works as well).\
 >> This is now a script file with a valid file signature to the current system, and should not be blocked by the system when attempting to run it.
 >
 > #### Execute the script directly in a terminal to circumvent certain Windows Explorer user-restrictions.
->> Do the following steps:\
+> Do the following steps:
 >> Open up a terminal in the current directory. You can do this by either starting the application ``cmd.exe`` (<em>Command Prompt</em>) or ``powershell.exe`` (<em>Windows PowerShell</em>).\
 >> Go back to the project directory in Windows Explorer and copy the full path to the directory from the top address bar.\
 >> Then in the terminal write the command ``cd `` and then paste the previously copied path and enter.\
@@ -86,5 +85,5 @@ So this project is intended to create an application with single entrypoint for 
 >> This should bypass the system file restriction from attempting to run an unknown script file by double-clicking in Windows Explorer.
 >
 > #### Executing the Main.ps1 PowerShell file in the terminal, skipping the Batch file entirely.
->> Do the following steps:\
->> Starting from where the previous option left off, in the same terminal enter the following ``powershell -ExecutionPolicy Bypass -File .\src\main.ps1 -ProjectRoot %cd%``
+> Do the following steps:
+>> Starting from where the previous option left off, in the same terminal enter the following code ``powershell -ExecutionPolicy Bypass -File .\src\main.ps1 -ProjectRoot %cd%``
