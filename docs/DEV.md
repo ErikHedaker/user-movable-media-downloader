@@ -12,15 +12,14 @@ So this project is intended to create an application with single entrypoint for 
 
 ## Project file structure
 
-``start.cmd``
+> ``start.cmd``
 
-Simplest way of starting an application in Windows, by using Windows batch script code to launch PowerShell script file with the correct configuration.
+> Simplest way of starting an application in Windows, by using Windows batch script code to launch PowerShell script file with the correct configuration.
 
-``src``
+> ``src``
 
-Actual application code in the project, and the only directory and files required to run the application.
-
-The files within are .ps1 files, PowerShell script files, and these execute in order to create the application.
+> Actual application code in the project, and the only directory and files required to run the application.\
+> The files within are .ps1 files, PowerShell script files, and these execute in order to create the application.
 
 ``lib``
 
@@ -52,7 +51,7 @@ Git repository managment file.
 
 CLI application for downloading and extracting online media.
 
-``ffmpeg``
+``ffmpeg
 
 CLI application for converting between codecs and media file formats.
 
