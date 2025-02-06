@@ -12,47 +12,47 @@ So this project is intended to create an application with single entrypoint for 
 
 ## Project file structure
 
-> start.cmd
+``start.cmd``
 
 Simplest way of starting an application in Windows, by using Windows batch script code to launch PowerShell script file with the correct configuration.
 
-#### src
+``src``
 
 Actual application code in the project, and the only directory and files required to run the application.
 
 The files within are .ps1 files, PowerShell script files, and these execute in order to create the application.
 
-#### lib
+``lib``
 
 Required portable executable files used by this project.
 
-#### tmp
+``tmp``
 
 Temporary work directory.
 
-#### docs
+``docs``
 
 Documentation files, i.e. this document.
 
-#### test
+``test``
 
 Contains files to setup and launch a Windows Sandbox instance, in order to test the application in a similar and filesystem-safe virtual environment at home.
 
-#### README.md
+``README.md``
 
 Shortened documentation file with simple step-by-step instructions.
 
-#### .gitignore
+``.gitignore``
 
 Git repository managment file.
 
 ## Open-source, third-party software used
 
-#### yt-dlp
+``yt-dlp``
 
 CLI application for downloading and extracting online media.
 
-#### ffmpeg
+``ffmpeg``
 
 CLI application for converting between codecs and media file formats.
 
