@@ -1,3 +1,15 @@
-# user-movable-media-downloader
+# Developer document
 
-Developer document.
+This document is for in-depth description with technical information about the project.
+
+## Purpose of project
+
+The purpose and origin of this project was from working and helping people in a public library with IT-questions, and occasionally being asked about if it's possible to download media files like YouTube videos, e.g. listening to music when they don't have Wifi available, and they don't have a service like a premium Spotify subscription which have an offline-mode.
+While easy for a person with more in-depth knowledge of CLI applications to setup and run in a terminal, it is hard to transfer that knowledge and explain the entire process for visitors who are not experience in using computers.
+So this project is intended to create an application with single entrypoint for installing and running, that can be run without any external libraries, and can be executed in a sandboxed, user-restricted Windows environment that you find in publicly-accessible library computers.
+
+## Troubleshooting
+
+1. When you attempt to run the application with the 'start.cmd', it may block the execution of the script file. While not a problem on a personal computer with administrator priviledges (where you can override the warning), it may completely block the file from ever executing in a user-restricted environment. This is due to an unknown file signature from creating the script file on another system (the developers computer), which has then been copied and transfered to the current system. Due to being an unknown signature, the system has marked it as potentially dangerous. To solve this issue, there are two options:
+    1. Right-click the file, select 'Edit'. This will show you the actual script code instead of attempting to run the file. Copy all of this text, create a new text file in the same directory (the name is not relevant), paste the copied script code into this text file. Then rename file and specifically change the extension of the file from .txt to .cmd (.bat works as well). This is now a script file with a known file signature, and should not be blocked by the system when executed.
+    2. Open up a terminal/shell in the current directory. You can do this by either starting the application 'cmd.exe' (Command Prompt) or 'powershell.exe' (Windows PowerShell), go back to the project directory in Windows Explorer and copy the full path to the directory at the top address bar. Then in the terminal write 'cd ', paste the path and enter (you may need to write 'cd /d ' if using 'cmd.exe' and the directory is on another drive). You should now be in the project directory, you can then execute the 'start.cmd' file by writing '.\start.cmd'. This should bypass the system file restriction from attempting to run an unknown script file by double-clicking it.

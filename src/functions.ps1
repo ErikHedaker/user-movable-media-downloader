@@ -323,6 +323,7 @@ function Write-PreviousDownloads {
     }
 }
 
+<#
 function Select-SuccessfulDownload {
     [CmdletBinding()]
     param(
@@ -344,6 +345,7 @@ function Select-SuccessfulDownload {
     }
 
     process {
-        #$Success = $Capture -match $Pattern.Success
+        $Success = $Capture -match $Pattern.Success
     }
 }
+#>
