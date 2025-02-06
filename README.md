@@ -9,10 +9,10 @@ For a more detailed description together with troubleshooting, check out the [de
 
 ## Installing the application
 
-### If you don't have necessary application directory
+### If you don't have the necessary application directory
 1. Download project from GitHub (https://github.com/ErikHedaker/user-movable-media-downloader)
 2. Extract the .zip file to a directory
-### When you have necessary application directory (you can move it to any location)
+### When you have the necessary application directory (you can move it to any location)
 3. Double-click 'start.cmd' inside application directory
 
 ## Running the application
