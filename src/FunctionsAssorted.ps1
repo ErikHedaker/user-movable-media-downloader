@@ -12,19 +12,6 @@ function Clear-HostApp {
         Write-Host "App[$App]`n"
     }
 }
-function Test-ProjectPath {
-    [CmdletBinding()]
-    param(
-        [Parameter(
-            Mandatory,
-            Position = 0
-        )][string]$Path
-    )
-
-    process {
-        $Path -like "$ProjectRoot*"
-    }
-}
 function Resolve-ProjectPath {
     [CmdletBinding()]
     param(
@@ -37,7 +24,7 @@ function Resolve-ProjectPath {
     process {
         $Path = Resolve-Path $Path
 
-        if (-not (Test-ProjectPath $Path)) {
+        if ($Path -notlike "$ProjectRoot*") {
             $Err = "`nOnly paths within [ProjectRoot] are permitted, [Path] is not:`n[$ProjectRoot]`n[$Path]`n"
             Write-Host $Err -ForegroundColor DarkYellow
             Pause
@@ -111,11 +98,11 @@ function Request-App {
     }
 
     process {
-        $WebClient = New-Object System.Net.WebClient
         $Destination = '{0}\{1}{2}' -f $Parent, $App.Name, [System.IO.Path]::GetExtension($Uri)
-        $RemainingRetry = $Retry
+        $WebClient = New-Object System.Net.WebClient
+        $RetryAttempt = $Retry
 
-        while ($RemainingRetry -gt 0) {
+        while ($RetryAttempt -gt 0) {
             try {
                 Write-Host "Starting [Download]:`n[$Uri]`n`nPlease wait...`n"
                 $WebClient.DownloadFile($Uri, $Destination)
@@ -124,7 +111,7 @@ function Request-App {
             } catch {
                 Write-Host "Error: $_"
                 Start-Sleep -Milliseconds $Delay
-                $RemainingRetry--
+                $RetryAttempt--
             }
         }
 
@@ -219,7 +206,7 @@ function Add-EnvPathUser {
             $Updated = '{0}{1};' -f [System.Environment]::GetEnvironmentVariable('Path', 'User'), $Entry
             [System.Environment]::SetEnvironmentVariable('Path', $Updated, 'User')
             $Env:Path = Get-EnvPath
-            Write-Host "Added [Path] to user environment variables:`n[$Entry]"
+            Write-Host "Updated user PATH environment variable to include [Path]:`n[$Entry]"
         }
     }
 }
