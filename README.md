@@ -13,7 +13,7 @@ For a more detailed description together with troubleshooting, check out the [de
 ### If you don't have the necessary application directory
 1. Download the project files from GitHub (https://github.com/ErikHedaker/user-movable-media-downloader)
 2. Extract the project .zip file to a directory
-### When you have the necessary application directory (you can move/copy it to any location)
+### When you have the necessary application directory (you can move/copy to any location)
 3. Double-click 'start.cmd' inside the application directory
 
 ## Running the application
