@@ -1,6 +1,6 @@
 # Developer document
 
-This document is for in-depth description with technical information about the project.
+This document is for an in-depth description with technical information about the project.
 
 ## Purpose of this project
 
@@ -80,7 +80,7 @@ So this project is intended to create an application with single entrypoint for 
 >> Go back to the project directory in Windows Explorer and copy the full path to the directory from the top address bar.\
 >> Then in the terminal write the command ``cd `` and then paste the previously copied path and enter.\
 >> You may need to write ``cd /d `` instead if you are using ``cmd.exe`` and the directory is on another system drive.\
->> You should now be in the project root directory (``user-movable-media-downloader``).\
+>> You should now be in the project root directory ``\user-movable-media-downloader\``.\
 >> You can then launch the application by writing ``.\start.cmd`` into the terminal.\
 >> This should bypass the system file restriction from attempting to run an unknown script file by double-clicking in Windows Explorer.
 >
