@@ -12,7 +12,7 @@ So this project is intended to create an application with single entrypoint for 
 
 ## Project file structure
 
-> #### start.cmd
+> start.cmd
 
 Simplest way of starting an application in Windows, by using Windows batch script code to launch PowerShell script file with the correct configuration.
 
