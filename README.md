@@ -17,7 +17,7 @@ For a more detailed description together with troubleshooting, check out the [de
 
 ## Running the application
 
-1. In the application directory (.\user-movable-media-downloader\\): Double-click 'start.cmd' (same as installing)
+1. In the application directory (\user-movable-media-downloader\\): Double-click 'start.cmd' (same as installing)
 2. In the pop-up window 'Select download directory': Press 'OK'
 3. In the command window choose whether to download video or audio files: Input '1' or '2', and press enter
-4. You may now download your choice of media files by entering a URL (the link at the top address bar in your browser)
+4. You may now download media files by entering a URL (the link at the top address bar in your browser)
