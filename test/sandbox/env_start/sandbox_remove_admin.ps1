@@ -1,1 +1,1 @@
-Write-Host "Script Path[$PSCommandPath]"
+Write-Host "Script[$PSCommandPath]"
