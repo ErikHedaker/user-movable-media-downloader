@@ -2,7 +2,7 @@
 
 This document is for in-depth description with technical information about the project.
 
-## Purpose of project
+## Purpose of this project
 
 The purpose and origin of this project was from working and helping visitors in a public library with IT related questions, and occasionally being asked if it's possible to download media like YouTube videos, e.g. listen to their music when they don't have Wifi available (and they don't have a service like a paid Spotify subscription which offer an offline-mode).
 
@@ -72,11 +72,11 @@ So this project is intended to create an application with single entrypoint for 
 >> Right-click the file, select ``Edit``. This will show you the actual script code instead of attempting to run the file. Copy all of this text.\
 >> Create a new text file in the same directory (filename is not relevant). Paste the copied script code into this new text file.\
 >> Then rename file and specifically change the extension of the file from ``.txt`` to ``.cmd`` (``.bat`` works as well).\
->> This is now a script file with a valid file signature to the current system, and should not be blocked by the system when attempting to run it.
+>> This is now a script file with a valid file signature to the current system, and should not be blocked by the system when ran.
 >
 > ### Execute the script directly in a terminal to circumvent certain Windows Explorer user-restrictions
 > Do the following steps:
->> Open up a terminal in the current directory. You can do this by either starting the application ``cmd.exe`` (<em>Command Prompt</em>) or ``powershell.exe`` (<em>Windows PowerShell</em>).\
+>> Launch a terminal in the current directory. You can do this by either starting the application ``cmd.exe`` (<em>Command Prompt</em>) or ``powershell.exe`` (<em>Windows PowerShell</em>).\
 >> Go back to the project directory in Windows Explorer and copy the full path to the directory from the top address bar.\
 >> Then in the terminal write the command ``cd `` and then paste the previously copied path and enter.\
 >> You may need to write ``cd /d `` instead if you are using ``cmd.exe`` and the directory is on another system drive.\
@@ -86,4 +86,5 @@ So this project is intended to create an application with single entrypoint for 
 >
 > ### Executing the Main.ps1 PowerShell file in the terminal, skipping the Batch file entirely
 > Do the following steps:
->> Starting from where the previous option left off, in the same terminal enter the following code ``powershell -ExecutionPolicy Bypass -File .\src\main.ps1 -ProjectRoot %cd%``
+>> Starting from where the previous option left off, in the same terminal enter the following code:
+>> ``powershell -ExecutionPolicy Bypass -File .\src\main.ps1 -ProjectRoot %cd%``
