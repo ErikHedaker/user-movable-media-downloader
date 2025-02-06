@@ -4,7 +4,7 @@ This document is for an in-depth description with technical information about th
 
 ## Purpose of this project
 
-The purpose and origin of this project was from working and helping visitors in a public library with IT related questions, and occasionally being asked if it's possible to download media like YouTube videos, e.g. listen to their music when they don't have Wifi available (and they don't have a service like a paid Spotify subscription which offer an offline-mode).
+The purpose and origin of this project was from working and helping visitors in a public library with IT-related questions, and occasionally being asked if it's possible to download media like YouTube videos, e.g. listen to their music when they don't have Wifi available (and they don't have a paid service like a Spotify subscription which offer an offline-mode).
 
 While easy for a person with more in-depth knowledge of CLI applications to setup and run in a terminal, it is hard to transfer that knowledge and explain the entire process of using a CLI application like yt-dlp directly for visitors who may not be as experienced with using computers.
 
@@ -86,5 +86,5 @@ So this project is intended to create an application with single entrypoint for 
 >
 > ### Executing the Main.ps1 PowerShell file in the terminal, skipping the Batch file entirely
 > Do the following steps:
->> Starting from where the previous option left off, in the same terminal enter the following code:
+>> Starting from where the previous option left off, in the same terminal enter the following code:\
 >> ``powershell -ExecutionPolicy Bypass -File .\src\main.ps1 -ProjectRoot %cd%``
