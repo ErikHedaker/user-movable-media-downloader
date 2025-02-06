@@ -5,7 +5,8 @@ For a more detailed description together with troubleshooting, check out the [de
 
 ## Prerequisites
 
-- PowerShell 5.1 (pre-installed in Windows 10 / Windows 11)
+1. PowerShell 5.1 (pre-installed in Windows 10 / Windows 11)
+2. Internet connection
 
 ## Installing the application
 
