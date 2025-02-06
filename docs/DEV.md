@@ -13,11 +13,9 @@ So this project is intended to create an application with single entrypoint for 
 ## Project file structure
 
 > ``start.cmd``
-
 > Simplest way of starting an application in Windows, by using Windows batch script code to launch PowerShell script file with the correct configuration.
 
 > ``src``
-
 > Actual application code in the project, and the only directory and files required to run the application.\
 > The files within are .ps1 files, PowerShell script files, and these execute in order to create the application.
 
