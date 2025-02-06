@@ -278,28 +278,28 @@ function Get-UserDownloadArguments {
 
     begin {
         $Select = $null
-        $Arguments = [ordered]@{
-            '1' = @(
-                'Download video',
-                @('-S', 'ext')
-            )
-            '2' = @(
-                'Download audio only',
-                @('-x', '--audio-format', 'mp3', '--audio-quality', '0')
-            )
+        $Options = [ordered]@{
+            '1' = [PSCustomObject]@{
+                Description = 'Download video'
+                Arguments   = @('-S', 'ext')
+            }
+            '2' = [PSCustomObject]@{
+                Description = 'Download audio only'
+                Arguments   = @('-x', '--audio-format', 'mp3', '--audio-quality', '0')
+            }
         }
     }
 
     process {
         Clear-HostApp
-        $Arguments.Keys | ForEach-Object { '[{0}] {1}' -f $_, $Arguments[$_][0] } | Write-Host
+        $Options.Keys | ForEach-Object { '[{0}] {1}' -f $_, $Options[$_].Description } | Write-Host
         Write-Host ''
 
         do {
             $Select = Read-Host 'Select'
-        } while ($null -eq $Arguments[$Select])
+        } while ($null -eq $Options[$Select])
 
-        $Arguments[$Select][1]
+        $Options[$Select].Arguments
     }
 }
 function Write-PreviousDownloads {
@@ -320,5 +320,30 @@ function Write-PreviousDownloads {
 
             Write-Host ''
         }
+    }
+}
+
+function Select-SuccessfulDownload {
+    [CmdletBinding()]
+    param(
+        [Parameter(
+            Mandatory,
+            Position = 0
+        )][string[]]$Downloads,
+        [Parameter(
+            Mandatory,
+            ValueFromPipeline
+        )][string[]]$Capture
+    )
+
+    begin {
+        $Pattern = [PSCustomObject]@{
+            Destination = ''
+            Success     = ''
+        }
+    }
+
+    process {
+        #$Success = $Capture -match $Pattern.Success
     }
 }
