@@ -284,7 +284,7 @@ function Get-UserDownloadArguments {
         $Options[$Select].Arguments
     }
 }
-function Write-PreviousDownloads {
+function Write-DownloadFiles {
     [CmdletBinding()]
     param(
         [Parameter(
@@ -306,13 +306,9 @@ function Write-PreviousDownloads {
 }
 
 <#
-function Select-SuccessfulDownload {
+function Select-DownloadFile {
     [CmdletBinding()]
     param(
-        [Parameter(
-            Mandatory,
-            Position = 0
-        )][string[]]$Downloads,
         [Parameter(
             Mandatory,
             ValueFromPipeline
@@ -320,14 +316,80 @@ function Select-SuccessfulDownload {
     )
 
     begin {
-        $Pattern = [PSCustomObject]@{
-            Destination = ''
-            Success     = ''
-        }
+        #$Pattern = 'Destination:\s(.+)'
+        $Pattern = 'Destination:.*$'
     }
 
     process {
-        $Success = $Capture -match $Pattern.Success
+        Write-Host 'Select-Download'
+
+        try {
+            # Define valid extensions
+            $Extensions = @('.mp4', '.mp3', '.webm')
+
+            # Build the regex dynamically
+            $extPattern = ($Extensions -join '|').Replace('.', '\.')
+            $pattern = 'Destination: (\S.+?\.(?:' + $extPattern + ')) '
+            #$pattern = 'Destination: (?<Path>\S.+?\.(?:' + $extPattern + ')) '
+
+            # Example text
+            $text = 'Destination: C:\Users\Example\Video.mp4 '
+
+            $Result = $text | Select-String -Pattern $pattern
+            $Result | Out-Host
+
+
+            # Perform the match
+            if ($text -match $pattern) {
+                $filePath = $matches[1]  # Extracted file path without "Destination: " and space
+                Write-Output "Extracted Path: $filePath"
+            } else {
+                Write-Output 'No match found.'
+            }
+
+
+
+
+
+
+
+
+
+
+
+
+
+            $Match = $Capture -match $Pattern
+            $Path = $Match[1] #.Trim()
+            $PathFirst = $Match[0] #.Trim()
+            $PathSingle = $Match
+
+            if ($Match -and $Download) {
+                Write-Host "Found Match[$Path]"
+                $Path
+            }
+
+        } catch {
+            Write-Host 'Download did not successfully complete.'
+            Write-Host "Path[$Path] PathFirst[$PathFirst] PathSingle[$PathSingle]"
+            $Match | Format-List -Force -Expand Both | Out-String | Write-Host
+            #$Match | Out-Host
+            Pause
+        }
+    }
+}
+
+function Format-Download {
+    [CmdletBinding()]
+    param(
+        [Parameter(
+            Mandatory,
+            ValueFromPipeline
+        )][string]$Path
+    )
+
+    process {
+        $Path
     }
 }
 #>

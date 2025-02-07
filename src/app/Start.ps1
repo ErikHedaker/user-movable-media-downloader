@@ -1,13 +1,14 @@
 $Directory = Get-UserDownloadDirectory
 $Arguments = Get-UserDownloadArguments
-$Downloads = @()
+$Completed = @()
 
 while ($true) {
     Clear-HostApp
-    Write-PreviousDownloads $Downloads
+    Write-DownloadFiles $Completed
     $URL = Read-Host 'Enter URL'
     #$Capture = $null
     & yt-dlp @Arguments -o "$Directory\%(title)s.%(ext)s" $URL #| Tee-Object -Variable Capture
-    #$Capture | Select-SuccessfulDownload $Downloads
-    $Downloads += $URL
+    $Completed += $URL
+    #Write-Host "`nCapture value:`n`n$Capture`n"
+    #$Completed += $Capture | Select-Download | Format-Download
 }
