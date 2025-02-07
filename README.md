@@ -14,9 +14,9 @@ View the [developer document](./docs/DEV.md)
 #### If you do not have the project directory available (e.g. copy of project on a USB flash drive):
 
 1. Download the project files from GitHub (https://github.com/ErikHedaker/user-movable-media-downloader)
-2. Extract the archived directory from the downloaded ``.zip`` file to any location
+2. Extract the archived directory from the downloaded ``.zip`` file to any location of your choice
 
-#### When you have the project directory (which can be moved/copied to any location of your choice):
+#### When you have the project directory (which can be moved/copied to any location):
 
 3. Double-click the file ``start.cmd`` inside the project root directory ``\user-movable-media-downloader\``
 

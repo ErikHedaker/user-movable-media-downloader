@@ -1,6 +1,4 @@
-param(
-    $ProjectRoot = $(throw 'ProjectRoot is required')
-)
+param($ProjectRoot = $(throw 'ProjectRoot is required'))
 
 try {
     Set-Location $ProjectRoot

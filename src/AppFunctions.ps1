@@ -1,15 +1,13 @@
-param(
-    $ProjectRoot = $(throw 'ProjectRoot is required')
-)
+param($ProjectRoot = $(throw 'ProjectRoot is required'))
 
-function Clear-HostApp {
+function Clear-HostApplication {
     [CmdletBinding()]
     param()
 
     process {
-        $App = Split-Path $ProjectRoot -Leaf
+        $Application = Split-Path $ProjectRoot -Leaf
         Clear-Host
-        Write-Host "App[$App]`n"
+        Write-Host "Application[$Application]`n"
     }
 }
 function Resolve-ProjectPath {
@@ -75,7 +73,7 @@ function Clear-Directory {
         }
     }
 }
-function Request-App {
+function Request-Resource {
     [CmdletBinding()]
     param(
         [Parameter(
@@ -89,7 +87,7 @@ function Request-App {
         [Parameter(
             Mandatory,
             ValueFromPipeline
-        )][PSCustomObject]$App
+        )][PSCustomObject]$Resource
     )
 
     begin {
@@ -98,15 +96,15 @@ function Request-App {
     }
 
     process {
-        $Destination = '{0}\{1}{2}' -f $Parent, $App.Name, [System.IO.Path]::GetExtension($Uri)
+        $Destination = '{0}\{1}{2}' -f $Parent, $Resource.Name, [System.IO.Path]::GetExtension($Uri)
         $WebClient = New-Object System.Net.WebClient
         $RetryAttempt = $Retry
 
         while ($RetryAttempt -gt 0) {
             try {
-                Write-Host "Starting [Download]:`n[$Uri]`n`nPlease wait...`n"
+                Write-Host "Downloading [URL]:`n[$Uri]`n`nPlease wait...`n"
                 $WebClient.DownloadFile($Uri, $Destination)
-                Write-Host "Finished [Download]:`n[$Destination]"
+                Write-Host "Downloaded [File]:`n[$Destination]"
                 break
             } catch {
                 Write-Host "Error: $_"
@@ -115,8 +113,8 @@ function Request-App {
             }
         }
 
-        $App.Path = $Destination
-        $App
+        $Resource.Path = $Destination
+        $Resource
     }
 }
 function Expand-IfArchive {
@@ -133,7 +131,7 @@ function Expand-IfArchive {
         [Parameter(
             Mandatory,
             ValueFromPipeline
-        )][PSCustomObject]$App
+        )][PSCustomObject]$Resource
     )
 
     begin {
@@ -144,12 +142,13 @@ function Expand-IfArchive {
         if ($Ext -contains [System.IO.Path]::GetExtension($Path)) {
             $Parent = Split-Path $Path -Parent
             $DestinationPath = "$Parent\$Name"
+            Write-Host "Extracting [Archive]:`n[$Path]`n`nPlease wait...`n"
             Expand-Archive $Path $DestinationPath -Force
-            Write-Host "Extracted [Archive] to [Directory]:`n[$Path]`n[$DestinationPath]"
-            $App.Path = $DestinationPath
+            Write-Host "Extracted [Directory]:`n[$DestinationPath]"
+            $Resource.Path = $DestinationPath
         }
 
-        $App
+        $Resource
     }
 }
 function Move-Files {
@@ -166,11 +165,7 @@ function Move-Files {
         [Parameter(
             Mandatory,
             ValueFromPipelineByPropertyName
-        )][string]$Path,
-        [Parameter(
-            Mandatory,
-            ValueFromPipeline
-        )][PSCustomObject]$App
+        )][string]$Path
     )
 
     process {
@@ -220,15 +215,15 @@ function Test-MissingCommand {
     )
 
     begin {
-        $Required = [System.Collections.Generic.List[bool]]::new()
+        $Resource = [System.Collections.Generic.List[bool]]::new()
     }
 
     process {
-        $Required.Add([bool](Get-Command $Name -CommandType Application -ErrorAction Ignore))
+        $Resource.Add([bool](Get-Command $Name -CommandType Application -ErrorAction Ignore))
     }
 
     end {
-        $Required -contains $false
+        $Resource -contains $false
     }
 }
 function Get-UserDownloadDirectory {
@@ -244,7 +239,7 @@ function Get-UserDownloadDirectory {
     }
 
     process {
-        Clear-HostApp
+        Clear-HostApplication
         $UserSelectDirectory = New-Object System.Windows.Forms.FolderBrowserDialog
         $UserSelectDirectory.ShowNewFolderButton = $true
         $UserSelectDirectory.SelectedPath = $Path
@@ -278,7 +273,7 @@ function Get-UserDownloadArguments {
     }
 
     process {
-        Clear-HostApp
+        Clear-HostApplication
         $Options.Keys | ForEach-Object { '[{0}] {1}' -f $_, $Options[$_].Description } | Write-Host
         Write-Host ''
 
