@@ -14,7 +14,7 @@ $Resource = @(
 )
 
 if ($Resource | Test-MissingCommand) {
-    Clear-HostApplication
+    Clear-HostApp
     $tmp = Initialize-Directory '.\tmp' | Clear-Directory -PassThru
     $lib = Initialize-Directory '.\lib' | Clear-Directory -PassThru
     $Resource | Request-Resource $tmp | Expand-IfArchive | Move-Files $lib | Add-EnvPathUser

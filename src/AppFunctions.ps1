@@ -1,6 +1,6 @@
 param($ProjectRoot = $(throw 'ProjectRoot is required'))
 
-function Clear-HostApplication {
+function Clear-HostApp {
     [CmdletBinding()]
     param()
 
@@ -239,7 +239,7 @@ function Get-UserDownloadDirectory {
     }
 
     process {
-        Clear-HostApplication
+        Clear-HostApp
         $UserSelectDirectory = New-Object System.Windows.Forms.FolderBrowserDialog
         $UserSelectDirectory.ShowNewFolderButton = $true
         $UserSelectDirectory.SelectedPath = $Path
@@ -273,7 +273,7 @@ function Get-UserDownloadArguments {
     }
 
     process {
-        Clear-HostApplication
+        Clear-HostApp
         $Options.Keys | ForEach-Object { '[{0}] {1}' -f $_, $Options[$_].Description } | Write-Host
         Write-Host ''
 

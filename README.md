@@ -22,7 +22,7 @@ View the [developer document](./docs/DEV.md)
 
 ## Running the application
 
-1. In the project root directory: Double-click ``start.cmd`` (same as installing)
+1. In the project root directory: Double-click ``start.cmd`` (same as when installing)
 2. In the following pop-up window titled ``Select download directory``: Press ``OK``
-3. In the terminal window choose whether to download video or audio files: Input ``1`` or ``2`` and press enter
+3. In the terminal window choose whether to download video or audio files: Enter ``1`` or ``2``
 4. You may now download media files by entering a URL (the link in the top address bar on your browser)
