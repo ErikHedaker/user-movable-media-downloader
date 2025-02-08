@@ -75,7 +75,7 @@ $SharedOutput = "C:\Users\WDAGUtilityAccount\Downloads\$ProjectName"
 
 $Command = "explorer $SharedOutput\test\sandbox"
 $SandboxFile = New-SandboxContent $SharedInput $SharedOutput $Command |
-    Export-SandboxFile 'test\sandbox\env_create\sandbox.wsb'
+    Export-SandboxFile 'test\sandbox\initialize\sandbox.wsb'
 #& robocopy $SourcePath $SharedInput src start.cmd /L /E /PURGE
 & robocopy $SourcePath $SharedInput /MIR /XD .git docs /XF README.md
 & "$SharedInput\$SandboxFile"

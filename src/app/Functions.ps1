@@ -23,8 +23,8 @@ function Resolve-ProjectPath {
         $Path = Resolve-Path $Path
 
         if ($Path -notlike "$ProjectRoot*") {
-            $Err = "`nOnly paths within [ProjectRoot] are permitted, [Path] is not:`n[$ProjectRoot]`n[$Path]`n"
-            Write-Host $Err -ForegroundColor DarkYellow
+            "`nOnly paths within [ProjectRoot] are permitted, [Path] is not:`n[{0}]`n[{1}]`n" -f
+            $ProjectRoot, $Path | Write-Host -ForegroundColor DarkYellow
             Pause
             Exit 1
         }
@@ -91,16 +91,17 @@ function Request-Resource {
     )
 
     begin {
-        $Retry = 4
         $Delay = 500
+        $RetryNum = 4
     }
 
     process {
-        $Destination = '{0}\{1}{2}' -f $Parent, $Resource.Name, [System.IO.Path]::GetExtension($Uri)
+        $Retry = $RetryNum
         $WebClient = New-Object System.Net.WebClient
-        $RetryAttempt = $Retry
+        $Destination = '{0}\{1}{2}' -f
+        $Parent, $Resource.Name, [System.IO.Path]::GetExtension($Uri)
 
-        while ($RetryAttempt -gt 0) {
+        while ($Retry -gt 0) {
             try {
                 Write-Host "Downloading [URL]:`n[$Uri]`n`nPlease wait...`n"
                 $WebClient.DownloadFile($Uri, $Destination)
@@ -109,7 +110,7 @@ function Request-Resource {
             } catch {
                 Write-Host "Error: $_"
                 Start-Sleep -Milliseconds $Delay
-                $RetryAttempt--
+                $Retry--
             }
         }
 
@@ -182,9 +183,9 @@ function Get-EnvPath {
     param()
 
     process {
-        ('{0};{1}' -f
+        '{0};{1}' -f
         [System.Environment]::GetEnvironmentVariable('Path', 'Machine'),
-        [System.Environment]::GetEnvironmentVariable('Path', 'User'))
+        [System.Environment]::GetEnvironmentVariable('Path', 'User')
     }
 }
 function Add-EnvPathUser {
@@ -198,7 +199,8 @@ function Add-EnvPathUser {
 
     process {
         if ((Get-EnvPath) -notlike "*$Entry*") {
-            $Updated = '{0}{1};' -f [System.Environment]::GetEnvironmentVariable('Path', 'User'), $Entry
+            $Updated = '{0}{1};' -f
+            [System.Environment]::GetEnvironmentVariable('Path', 'User'), $Entry
             [System.Environment]::SetEnvironmentVariable('Path', $Updated, 'User')
             $Env:Path = Get-EnvPath
             Write-Host "Updated user PATH environment variable to include [Path]:`n[$Entry]"
@@ -240,15 +242,15 @@ function Get-UserDownloadDirectory {
 
     process {
         Clear-HostApp
-        $UserSelectDirectory = New-Object System.Windows.Forms.FolderBrowserDialog
-        $UserSelectDirectory.ShowNewFolderButton = $true
-        $UserSelectDirectory.SelectedPath = $Path
-        $UserSelectDirectory.Description = 'Select download directory'
+        $DirectoryPrompt = New-Object System.Windows.Forms.FolderBrowserDialog
+        $DirectoryPrompt.ShowNewFolderButton = $true
+        $DirectoryPrompt.SelectedPath = $Path
+        $DirectoryPrompt.Description = 'Select download directory'
         Write-Host 'Showing [System.Windows.Forms.FolderBrowserDialog] to select download directory...'
-        $Result = $UserSelectDirectory.ShowDialog() -eq [System.Windows.Forms.DialogResult]::OK
+        $Result = $DirectoryPrompt.ShowDialog() -eq [System.Windows.Forms.DialogResult]::OK
 
         if ($Result) {
-            $UserSelectDirectory.SelectedPath
+            $DirectoryPrompt.SelectedPath
         } else {
             $Path
         }
@@ -274,8 +276,9 @@ function Get-UserDownloadArguments {
 
     process {
         Clear-HostApp
-        $Options.Keys | ForEach-Object { '[{0}] {1}' -f $_, $Options[$_].Description } | Write-Host
-        Write-Host ''
+        $Options.Keys |
+            ForEach-Object { '[{0}] {1}' -f $_, $Options[$_].Description } -End { '' } |
+                Out-Host
 
         do {
             $Select = Read-Host 'Select'
@@ -284,7 +287,7 @@ function Get-UserDownloadArguments {
         $Options[$Select].Arguments
     }
 }
-function Write-DownloadFiles {
+function Format-DownloadHistory {
     [CmdletBinding()]
     param(
         [Parameter(
@@ -294,102 +297,38 @@ function Write-DownloadFiles {
 
     process {
         if ($Downloads.Count -gt 0) {
-            Write-Host 'Downloads completed:'
+            'Download history:'
 
             for ($i = 0; $i -lt $Downloads.Count; $i++) {
-                Write-Host ("[{0}`t- {1}]" -f ($i + 1), $Downloads[$i])
+                '> {0,-2} = [{1}]' -f
+                ($i + 1), $Downloads[$i]
             }
 
-            Write-Host ''
+            ''
         }
     }
 }
-
-<#
-function Select-DownloadFile {
+function Select-FileDestination {
     [CmdletBinding()]
     param(
         [Parameter(
             Mandatory,
             ValueFromPipeline
-        )][string[]]$Capture
+        )][string]$Text
     )
 
     begin {
-        #$Pattern = 'Destination:\s(.+)'
-        $Pattern = 'Destination:.*$'
+        $ExtVideo = @('mp4', 'mov', 'webm', 'flv')
+        $ExtAudio = @('m4a', 'aac', 'mp3', 'ogg', 'opus', 'webm')
+        $Pattern = '\s*Destination: (?<Path>\S.+?\.(?:{0}))\s*' -f
+        ($ExtVideo + $ExtAudio -join '|')
     }
 
     process {
-        Write-Host 'Select-Download'
+        $Result = $Text | Select-String $Pattern -AllMatches
 
-        try {
-            # Define valid extensions
-            $Extensions = @('.mp4', '.mp3', '.webm')
-
-            # Build the regex dynamically
-            $extPattern = ($Extensions -join '|').Replace('.', '\.')
-            $pattern = 'Destination: (\S.+?\.(?:' + $extPattern + ')) '
-            #$pattern = 'Destination: (?<Path>\S.+?\.(?:' + $extPattern + ')) '
-
-            # Example text
-            $text = 'Destination: C:\Users\Example\Video.mp4 '
-
-            $Result = $text | Select-String -Pattern $pattern
-            $Result | Out-Host
-
-
-            # Perform the match
-            if ($text -match $pattern) {
-                $filePath = $matches[1]  # Extracted file path without "Destination: " and space
-                Write-Output "Extracted Path: $filePath"
-            } else {
-                Write-Output 'No match found.'
-            }
-
-
-
-
-
-
-
-
-
-
-
-
-
-            $Match = $Capture -match $Pattern
-            $Path = $Match[1] #.Trim()
-            $PathFirst = $Match[0] #.Trim()
-            $PathSingle = $Match
-
-            if ($Match -and $Download) {
-                Write-Host "Found Match[$Path]"
-                $Path
-            }
-
-        } catch {
-            Write-Host 'Download did not successfully complete.'
-            Write-Host "Path[$Path] PathFirst[$PathFirst] PathSingle[$PathSingle]"
-            $Match | Format-List -Force -Expand Both | Out-String | Write-Host
-            #$Match | Out-Host
-            Pause
+        if ($Result) {
+            $Result.Matches[-1].Groups['Path']
         }
     }
 }
-
-function Format-Download {
-    [CmdletBinding()]
-    param(
-        [Parameter(
-            Mandatory,
-            ValueFromPipeline
-        )][string]$Path
-    )
-
-    process {
-        $Path
-    }
-}
-#>

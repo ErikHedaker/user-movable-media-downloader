@@ -15,6 +15,7 @@ $Resource = @(
 
 if ($Resource | Test-MissingCommand) {
     Clear-HostApp
+    Write-Host 'Starting installation...'
     $tmp = Initialize-Directory '.\tmp' | Clear-Directory -PassThru
     $lib = Initialize-Directory '.\lib' | Clear-Directory -PassThru
     $Resource | Request-Resource $tmp | Expand-IfArchive | Move-Files $lib | Add-EnvPathUser

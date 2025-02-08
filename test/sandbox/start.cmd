@@ -6,5 +6,5 @@ set destination=%USERPROFILE%\%project%
 robocopy . %destination% /E
 cd /d %destination%
 echo CD[%cd%]
-powershell -ExecutionPolicy Bypass -File .\test\sandbox\env_start\sandbox_remove_admin.ps1
+powershell -ExecutionPolicy Bypass -File .\test\sandbox\running\remove_admin.ps1
 call .\start.cmd
