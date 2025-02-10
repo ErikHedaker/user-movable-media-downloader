@@ -4,7 +4,9 @@ try {
     Set-Location $ProjectRoot
     Set-Variable ErrorActionPreference Stop
     Set-Variable ProgressPreference SilentlyContinue
-    . .\src\Functions $ProjectRoot
+    . .\src\FunctionsApp $ProjectRoot
+    # .\test\src\reverse_initialization.ps1
+    # .\test\src\clear_directory_downloads.ps1
     $Resource = Get-RequiredResource
 
     if ($Resource | Test-MissingCommand) {
@@ -32,7 +34,5 @@ try {
         $History += $Output -join "`n" | Select-FileDestination
     }
 } catch {
-    "`nCaught error:`n`n$_`n" |
-        Write-Host -ForegroundColor DarkYellow
-    Pause
+    "`nError:`n`n$_`n" | Exit-AppFailure
 }

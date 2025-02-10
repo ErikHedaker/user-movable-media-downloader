@@ -1,5 +1,20 @@
 param($ProjectRoot = $(throw 'ProjectRoot is required'))
 
+function Exit-AppFailure {
+    [CmdletBinding()]
+    param(
+        [Parameter(
+            Mandatory,
+            ValueFromPipeline
+        )][string]$Message
+    )
+
+    process {
+        $Message | Write-Host -ForegroundColor DarkYellow
+        Pause
+        Exit 1
+    }
+}
 function Get-RequiredResource {
     [CmdletBinding()]
     param()
@@ -7,13 +22,13 @@ function Get-RequiredResource {
     process {
         @(
             [PSCustomObject]@{
-                Path    = 'https://github.com/BtbN/FFmpeg-Builds/releases' +
+                Path   = 'https://github.com/BtbN/FFmpeg-Builds/releases' +
                 '/download/latest/ffmpeg-master-latest-win64-lgpl.zip'
                 Name   = 'ffmpeg'
                 Filter = 'ff*.exe'
             },
             [PSCustomObject]@{
-                Path    = 'https://github.com/yt-dlp/yt-dlp/releases' +
+                Path   = 'https://github.com/yt-dlp/yt-dlp/releases' +
                 '/latest/download/yt-dlp.exe'
                 Name   = 'yt-dlp'
                 Filter = 'yt-dlp.exe'
@@ -41,13 +56,15 @@ function Resolve-ProjectPath {
     )
 
     process {
-        $Path = Resolve-Path $Path
+        try {
+            $Path = Resolve-Path $Path
+        } catch {
+            "`nError:`n`n$_`n" | Exit-AppFailure
+        }
 
         if ($Path -notlike "$ProjectRoot*") {
             "`nOnly paths within [ProjectRoot] are permitted, [Path] is not:`n[{0}]`n[{1}]`n" -f
-            $ProjectRoot, $Path | Write-Host -ForegroundColor DarkYellow
-            Pause
-            Exit 1
+            $ProjectRoot, $Path | Exit-AppFailure
         }
 
         $Path
@@ -156,12 +173,8 @@ function Expand-ArchiveFileExt {
         )][PSCustomObject]$Resource
     )
 
-    begin {
-        $Ext = @('.zip')
-    }
-
     process {
-        if ($Ext -contains [System.IO.Path]::GetExtension($Path)) {
+        if ([System.IO.Path]::GetExtension($Path) -eq '.zip') {
             $Parent = Split-Path $Path -Parent
             $DestinationPath = "$Parent\$Name"
             Write-Host "Extracting [Archive]:`n[$Path]`n`nPlease wait...`n"
@@ -329,6 +342,20 @@ function Format-DownloadHistory {
         }
     }
 }
+function Get-MediaExtension {
+    [CmdletBinding()]
+    param()
+
+    begin {
+        $ExtVideo = @('mp4', 'mov', 'webm', 'flv')
+        $ExtAudio = @('m4a', 'aac', 'mp3', 'ogg', 'opus', 'webm')
+        $Extension = $ExtVideo + $ExtAudio
+    }
+
+    process {
+        $Extension
+    }
+}
 function Select-FileDestination {
     [CmdletBinding()]
     param(
@@ -339,10 +366,8 @@ function Select-FileDestination {
     )
 
     begin {
-        $ExtVideo = @('mp4', 'mov', 'webm', 'flv')
-        $ExtAudio = @('m4a', 'aac', 'mp3', 'ogg', 'opus', 'webm')
         $Pattern = '\s*Destination: (?<Path>\S.+?\.(?:{0}))\s*' -f
-        ($ExtVideo + $ExtAudio -join '|')
+        (Get-MediaExtension -join '|')
     }
 
     process {
