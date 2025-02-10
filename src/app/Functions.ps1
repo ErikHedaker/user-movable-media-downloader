@@ -118,7 +118,7 @@ function Request-Resource {
         $Resource
     }
 }
-function Expand-IfArchive {
+function Expand-ArchiveFileExt {
     [CmdletBinding()]
     param(
         [Parameter(
@@ -152,7 +152,7 @@ function Expand-IfArchive {
         $Resource
     }
 }
-function Move-Files {
+function Move-FilterFiles {
     [CmdletBinding()]
     param(
         [Parameter(

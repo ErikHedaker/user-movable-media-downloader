@@ -55,27 +55,27 @@ function Export-SandboxFile {
     }
 }
 
+$CommandTest = $(
+    "explorer $SharedOutput\test\sandbox",
+    "start $SharedOutput\tests\sandbox\env_start.cmd",
+    "ping 127.0.0.1 -n 2 &amp; explorer $SharedOutput\tests\sandbox",
+    "ping -n 3 127.0.0.1 &gt; nul &amp; explorer $SharedOutput\tests\sandbox",
+    "timeout 5 && $SharedOutput\tests\sandbox\env_start.cmd",
+    "powershell.exe -ExecutionPolicy Bypass -Command '& { explorer $SharedOutput\tests\sandbox }'",
+    "powershell.exe -ExecutionPolicy Bypass -Command 'Invoke-Command -ScriptBlock { explorer C:\Users\WDAGUtilityAccount\Sandbox\AutoUserSetup\tests\sandbox }'",
+    "powershell -ExecutionPolicy Bypass $SharedOutput\tests\sandbox\env_start.cmd"
+)
+
 Write-Host "Script Path[$PSCommandPath]"
 $Process = 'WindowsSandboxRemoteSession*'
-Write-Host "Stop-Process Name[$Process]"
 Get-Process -Name $Process | Stop-Process -Force
+Write-Host "Stop-Process Name[$Process]"
 $SourcePath = (Get-Location).Path
 $ProjectName = Split-Path $SourcePath -Leaf
 $SharedInput = "$env:USERPROFILE\Sandbox\$ProjectName" + '_copy'
 $SharedOutput = "C:\Users\WDAGUtilityAccount\Downloads\$ProjectName"
-
-#$Command = "explorer $SharedOutput\tests\sandbox"
-#$Command = "start $SharedOutput\tests\sandbox\env_start.cmd"
-#$Command = "ping 127.0.0.1 -n 2 &amp; explorer $SharedOutput\tests\sandbox"
-#$Command = "ping -n 3 127.0.0.1 &gt; nul &amp; explorer $SharedOutput\tests\sandbox"
-#$Command = "timeout 5 && $SharedOutput\tests\sandbox\env_start.cmd"
-#$Command = "powershell.exe -ExecutionPolicy Bypass -Command '& { explorer $SharedOutput\tests\sandbox }'"
-#$Command = "powershell.exe -ExecutionPolicy Bypass -Command 'Invoke-Command -ScriptBlock { explorer C:\Users\WDAGUtilityAccount\Sandbox\AutoUserSetup\tests\sandbox }'"
-#$Command = "powershell -ExecutionPolicy Bypass $SharedOutput\tests\sandbox\env_start.cmd"
-
-$Command = "explorer $SharedOutput\test\sandbox"
+$Command = $CommandTest[0]
 $SandboxFile = New-SandboxContent $SharedInput $SharedOutput $Command |
     Export-SandboxFile 'test\sandbox\initialize\sandbox.wsb'
-#& robocopy $SourcePath $SharedInput src start.cmd /L /E /PURGE
 & robocopy $SourcePath $SharedInput /MIR /XD .git docs /XF README.md
 & "$SharedInput\$SandboxFile"
