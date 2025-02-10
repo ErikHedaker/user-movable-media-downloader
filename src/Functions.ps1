@@ -1,5 +1,26 @@
 param($ProjectRoot = $(throw 'ProjectRoot is required'))
 
+function Get-RequiredResource {
+    [CmdletBinding()]
+    param()
+
+    process {
+        @(
+            [PSCustomObject]@{
+                Path    = 'https://github.com/BtbN/FFmpeg-Builds/releases' +
+                '/download/latest/ffmpeg-master-latest-win64-lgpl.zip'
+                Name   = 'ffmpeg'
+                Filter = 'ff*.exe'
+            },
+            [PSCustomObject]@{
+                Path    = 'https://github.com/yt-dlp/yt-dlp/releases' +
+                '/latest/download/yt-dlp.exe'
+                Name   = 'yt-dlp'
+                Filter = 'yt-dlp.exe'
+            }
+        )
+    }
+}
 function Clear-HostApp {
     [CmdletBinding()]
     param()
@@ -83,7 +104,7 @@ function Request-Resource {
         [Parameter(
             Mandatory,
             ValueFromPipelineByPropertyName
-        )][string]$Uri,
+        )][string]$Path,
         [Parameter(
             Mandatory,
             ValueFromPipeline
@@ -99,12 +120,12 @@ function Request-Resource {
         $Retry = $RetryNum
         $WebClient = New-Object System.Net.WebClient
         $Destination = '{0}\{1}{2}' -f
-        $Parent, $Resource.Name, [System.IO.Path]::GetExtension($Uri)
+        $Parent, $Resource.Name, [System.IO.Path]::GetExtension($Path)
 
         while ($Retry -gt 0) {
             try {
-                Write-Host "Downloading [URL]:`n[$Uri]`n`nPlease wait...`n"
-                $WebClient.DownloadFile($Uri, $Destination)
+                Write-Host "Downloading [URL]:`n[$Path]`n`nPlease wait...`n"
+                $WebClient.DownloadFile($Path, $Destination)
                 Write-Host "Downloaded [File]:`n[$Destination]"
                 break
             } catch {
