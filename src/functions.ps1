@@ -15,37 +15,6 @@ function Exit-AppFailure {
         Exit 1
     }
 }
-function Get-RequiredResource {
-    [CmdletBinding()]
-    param()
-
-    process {
-        @(
-            [PSCustomObject]@{
-                Path   = 'https://github.com/BtbN/FFmpeg-Builds/releases' +
-                '/download/latest/ffmpeg-master-latest-win64-lgpl.zip'
-                Name   = 'ffmpeg'
-                Filter = 'ff*.exe'
-            },
-            [PSCustomObject]@{
-                Path   = 'https://github.com/yt-dlp/yt-dlp/releases' +
-                '/latest/download/yt-dlp.exe'
-                Name   = 'yt-dlp'
-                Filter = 'yt-dlp.exe'
-            }
-        )
-    }
-}
-function Clear-HostApp {
-    [CmdletBinding()]
-    param()
-
-    process {
-        $Application = Split-Path $ProjectRoot -Leaf
-        Clear-Host
-        Write-Host "Application[$Application]`n"
-    }
-}
 function Resolve-ProjectPath {
     [CmdletBinding()]
     param(
@@ -68,6 +37,41 @@ function Resolve-ProjectPath {
         }
 
         $Path
+    }
+}
+function Get-RequiredResource {
+    [CmdletBinding()]
+    param()
+
+    begin {
+        $Resource = @(
+            [PSCustomObject]@{
+                Path   = 'https://github.com/BtbN/FFmpeg-Builds/releases' +
+                '/download/latest/ffmpeg-master-latest-win64-lgpl.zip'
+                Name   = 'ffmpeg'
+                Filter = 'ff*.exe'
+            },
+            [PSCustomObject]@{
+                Path   = 'https://github.com/yt-dlp/yt-dlp/releases' +
+                '/latest/download/yt-dlp.exe'
+                Name   = 'yt-dlp'
+                Filter = 'yt-dlp.exe'
+            }
+        )
+    }
+
+    process {
+        $Resource
+    }
+}
+function Clear-HostApp {
+    [CmdletBinding()]
+    param()
+
+    process {
+        $Application = Split-Path $ProjectRoot -Leaf
+        Clear-Host
+        Write-Host "Application[$Application]`n"
     }
 }
 function Initialize-Directory {
@@ -156,7 +160,7 @@ function Request-Resource {
         $Resource
     }
 }
-function Expand-ArchiveFileExt {
+function Expand-SpecificFiles {
     [CmdletBinding()]
     param(
         [Parameter(
@@ -175,8 +179,7 @@ function Expand-ArchiveFileExt {
 
     process {
         if ([System.IO.Path]::GetExtension($Path) -eq '.zip') {
-            $Parent = Split-Path $Path -Parent
-            $DestinationPath = "$Parent\$Name"
+            $DestinationPath = '{0}\{1}' -f (Split-Path $Path -Parent), $Name
             Write-Host "Extracting [Archive]:`n[$Path]`n`nPlease wait...`n"
             Expand-Archive $Path $DestinationPath -Force
             Write-Host "Extracted [Directory]:`n[$DestinationPath]"
@@ -186,7 +189,7 @@ function Expand-ArchiveFileExt {
         $Resource
     }
 }
-function Move-FilterFiles {
+function Move-SpecificFiles {
     [CmdletBinding()]
     param(
         [Parameter(
@@ -241,7 +244,7 @@ function Add-EnvPathUser {
         }
     }
 }
-function Test-MissingCommand {
+function Test-CommandMissing {
     [CmdletBinding()]
     param(
         [Parameter(
@@ -367,7 +370,7 @@ function Select-FileDestination {
 
     begin {
         $Pattern = '\s*Destination: (?<Path>\S.+?\.(?:{0}))\s*' -f
-        (Get-MediaExtension -join '|')
+        ((Get-MediaExtension) -join '|')
     }
 
     process {

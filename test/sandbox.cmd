@@ -1,4 +1,4 @@
 @echo off
 cd /d %~dp0..
-echo Script[%~f0]
-powershell -ExecutionPolicy Bypass -File .\test\sandbox\initialize\initialize.ps1
+echo Script File[%~f0]
+powershell -ExecutionPolicy Bypass -File .\test\sandbox\outside\spawn.ps1 -ProjectRoot %cd%

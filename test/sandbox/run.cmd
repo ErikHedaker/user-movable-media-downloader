@@ -1,10 +1,10 @@
 @echo off
 cd /d %~dp0..\..
-echo Script[%~f0]
+echo Script File[%~f0]
 for %%d in ("%cd%") do set project=%%~nxd
 set destination=%USERPROFILE%\%project%
 robocopy . %destination% /E
 cd /d %destination%
-echo CD[%cd%]
-powershell -ExecutionPolicy Bypass -File .\test\sandbox\running\remove_admin.ps1
+echo Change Directory[%cd%]
+powershell -ExecutionPolicy Bypass -File .\test\sandbox\inside\setup_environment.ps1
 call .\start.cmd

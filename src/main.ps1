@@ -4,20 +4,20 @@ try {
     Set-Location $ProjectRoot
     Set-Variable ErrorActionPreference Stop
     Set-Variable ProgressPreference SilentlyContinue
-    . .\src\FunctionsApp $ProjectRoot
+    . .\src\functions $ProjectRoot
     # .\test\src\reverse_initialization.ps1
     # .\test\src\clear_directory_downloads.ps1
     $Resource = Get-RequiredResource
 
-    if ($Resource | Test-MissingCommand) {
+    if ($Resource | Test-CommandMissing) {
         Clear-HostApp
-        Write-Host 'Starting installation...'
+        "Starting installation...`n"
         $tmp = Initialize-Directory '.\tmp' | Clear-Directory -PassThru
         $lib = Initialize-Directory '.\lib' | Clear-Directory -PassThru
         $Resource |
             Request-Resource $tmp |
-                Expand-ArchiveFileExt |
-                    Move-FilterFiles $lib |
+                Expand-SpecificFiles |
+                    Move-SpecificFiles $lib |
                         Add-EnvPathUser
         Clear-Directory $tmp
     }
