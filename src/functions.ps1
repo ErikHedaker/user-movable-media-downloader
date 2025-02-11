@@ -1,18 +1,39 @@
-param($ProjectRoot = $(throw 'ProjectRoot is required'))
-
+param([string]$ProjectRoot = $(throw 'ProjectRoot parameter is required'))
 function Exit-AppFailure {
     [CmdletBinding()]
     param(
         [Parameter(
-            Mandatory,
+            Position = 0
+        )]$Err,
+        [Parameter(
             ValueFromPipeline
-        )][string]$Message
+        )]$Message
     )
 
     process {
-        $Message | Write-Host -ForegroundColor DarkYellow
+        $Output = "`n`tApplication Error`n"
+
+        if ($null -ne $Message) {
+            $Output += $Message
+        }
+
+        if ($null -ne $Err) {
+            $Output += "
+            Message:`n[{0}]
+            FullyQualifiedErrorId:`n[{1}]
+            CategoryInfo:`n[{2}]
+            CommandInvocation:`n[{3}]" -f
+            $Err.Exception.Message,
+            $Err.FullyQualifiedErrorId,
+            $Err.CategoryInfo,
+            ($Err.Exception.CommandInvocation |
+                Format-List -Force -Expand Both |
+                    Out-String)
+        }
+
+        $Output | Write-Host -ForegroundColor DarkYellow
         Pause
-        Exit 1
+        [System.Environment]::Exit(0)
     }
 }
 function Resolve-ProjectPath {
@@ -28,7 +49,7 @@ function Resolve-ProjectPath {
         try {
             $Path = Resolve-Path $Path
         } catch {
-            "`nError:`n`n$_`n" | Exit-AppFailure
+            Exit-AppFailure $_
         }
 
         if ($Path -notlike "$ProjectRoot*") {
@@ -71,7 +92,8 @@ function Clear-HostApp {
     process {
         $Application = Split-Path $ProjectRoot -Leaf
         Clear-Host
-        Write-Host "Application[$Application]`n"
+        "Application[{0}]`n" -f
+        $Application | Out-Host
     }
 }
 function Initialize-Directory {
@@ -86,7 +108,7 @@ function Initialize-Directory {
     process {
         if (-not (Test-Path $Path)) {
             $Path = (New-Item $Path -ItemType Directory).FullName
-            Write-Host "Added [Directory]:`n[$Path]"
+            "Added [Directory]:`n[{0}]" -f $Path | Out-Host
         }
 
         Resolve-ProjectPath $Path
@@ -97,22 +119,77 @@ function Clear-Directory {
     param(
         [parameter(
             Mandatory,
-            Position = 0,
             ValueFromPipeline
         )][string]$Path,
-        [switch]$WhatIf,
-        [switch]$PassThru
+        [switch]$WhatIf
     )
 
     process {
         if (Test-Path $Path) {
             Get-ChildItem $Path | Remove-Item -Recurse -WhatIf:$WhatIf
-            Write-Host "Cleared [Directory]:`n[$Path]"
+            "Cleared [Directory]:`n[{0}]" -f $Path | Out-Host
         }
 
-        if ($PassThru) {
-            $Path
+        $Path
+    }
+}
+function Get-EnvPath {
+    [CmdletBinding()]
+    param(
+        [switch]$String
+    )
+
+    process {
+        $EnvPath = [ordered]@{
+            Machine = [System.Environment]::GetEnvironmentVariable(
+                'Path', 'Machine'
+            ).Trim(';').Split(';')
+            User    = [System.Environment]::GetEnvironmentVariable(
+                'Path', 'User'
+            ).Trim(';').Split(';')
         }
+
+        if ($String) {
+            $EnvPath.Machine +
+            $EnvPath.User -join ';'
+        } else {
+            $EnvPath
+        }
+    }
+}
+function Remove-UserEnvPath {
+    [CmdletBinding()]
+    param(
+        [Parameter(
+            Mandatory,
+            Position = 0
+        )][string]$Pattern
+    )
+
+    process {
+        $Filtered = (Get-EnvPath).User | Where-Object { $_ -notlike $Pattern }
+        $Value = $Filtered -join ';'
+        [System.Environment]::SetEnvironmentVariable('Path', $Value, 'User')
+        $Env:Path = Get-EnvPath -String
+    }
+}
+function Add-UserEnvPath {
+    [CmdletBinding()]
+    param(
+        [Parameter(
+            Mandatory,
+            ValueFromPipeline
+        )][string]$Path
+    )
+
+    process {
+        Remove-UserEnvPath "*$Path*"
+        $UserEnvPath = (Get-EnvPath).User + $Path
+        $Appended = $UserEnvPath -join ';'
+        [System.Environment]::SetEnvironmentVariable('Path', $Appended, 'User')
+        $Env:Path = Get-EnvPath -String
+        "Appended [Path] to User Environment Variable:`n[{0}]" -f $Path | Out-Host
+        $Path
     }
 }
 function Request-Resource {
@@ -132,35 +209,27 @@ function Request-Resource {
         )][PSCustomObject]$Resource
     )
 
-    begin {
-        $Delay = 500
-        $RetryNum = 4
-    }
-
     process {
-        $Retry = $RetryNum
         $WebClient = New-Object System.Net.WebClient
         $Destination = '{0}\{1}{2}' -f
         $Parent, $Resource.Name, [System.IO.Path]::GetExtension($Path)
 
-        while ($Retry -gt 0) {
+        for ($Retry = 4; $Retry -gt 0; $Retry--) {
             try {
-                Write-Host "Downloading [URL]:`n[$Path]`n`nPlease wait...`n"
+                "Downloading [URL]:`n[{0}]`n`nPlease wait...`n" -f
+                $Path | Out-Host
                 $WebClient.DownloadFile($Path, $Destination)
-                Write-Host "Downloaded [File]:`n[$Destination]"
-                break
+                "Downloaded [File]:`n[{0}]" -f
+                ($Resource.Path = $Destination) | Out-Host
+                return $Resource
             } catch {
-                Write-Host "Error: $_"
-                Start-Sleep -Milliseconds $Delay
-                $Retry--
+                'Error: {0}' -f $_ | Out-Host
+                Start-Sleep -Milliseconds 500
             }
         }
-
-        $Resource.Path = $Destination
-        $Resource
     }
 }
-function Expand-SpecificFiles {
+function Expand-Resource {
     [CmdletBinding()]
     param(
         [Parameter(
@@ -180,16 +249,18 @@ function Expand-SpecificFiles {
     process {
         if ([System.IO.Path]::GetExtension($Path) -eq '.zip') {
             $DestinationPath = '{0}\{1}' -f (Split-Path $Path -Parent), $Name
-            Write-Host "Extracting [Archive]:`n[$Path]`n`nPlease wait...`n"
+            "Extracting [Archive]:`n[{0}]`n`nPlease wait...`n" -f
+            $Path | Out-Host
             Expand-Archive $Path $DestinationPath -Force
-            Write-Host "Extracted [Directory]:`n[$DestinationPath]"
+            "Extracted [Directory]:`n[{0}]" -f
+            $DestinationPath | Out-Host
             $Resource.Path = $DestinationPath
         }
 
         $Resource
     }
 }
-function Move-SpecificFiles {
+function Move-Resource {
     [CmdletBinding()]
     param(
         [Parameter(
@@ -210,41 +281,12 @@ function Move-SpecificFiles {
         Get-ChildItem $Path $Filter -Recurse | ForEach-Object {
             $Source = $PSItem.FullName
             Move-Item -Path $Source $Destination -Force
-            Write-Host "Moved [Source] to [Destination]:`n[$Source]`n[$Destination]"
-        }
-        $Destination
-    }
-}
-function Get-EnvPath {
-    [CmdletBinding()]
-    param()
-
-    process {
-        '{0};{1}' -f
-        [System.Environment]::GetEnvironmentVariable('Path', 'Machine'),
-        [System.Environment]::GetEnvironmentVariable('Path', 'User')
-    }
-}
-function Add-EnvPathUser {
-    [CmdletBinding()]
-    param(
-        [Parameter(
-            Mandatory,
-            ValueFromPipeline
-        )][string]$Entry
-    )
-
-    process {
-        if ((Get-EnvPath) -notlike "*$Entry*") {
-            $Updated = '{0}{1};' -f
-            [System.Environment]::GetEnvironmentVariable('Path', 'User'), $Entry
-            [System.Environment]::SetEnvironmentVariable('Path', $Updated, 'User')
-            $Env:Path = Get-EnvPath
-            Write-Host "Updated user PATH environment variable to include [Path]:`n[$Entry]"
+            "Moved [Source] to [Destination]:`n[{0}]`n[{1}]" -f
+            $Source, $Destination | Out-Host
         }
     }
 }
-function Test-CommandMissing {
+function Test-InvalidCommand {
     [CmdletBinding()]
     param(
         [Parameter(
@@ -282,8 +324,9 @@ function Get-UserDownloadDirectory {
         $DirectoryPrompt = New-Object System.Windows.Forms.FolderBrowserDialog
         $DirectoryPrompt.ShowNewFolderButton = $true
         $DirectoryPrompt.SelectedPath = $Path
-        $DirectoryPrompt.Description = 'Select download directory'
-        Write-Host 'Showing [System.Windows.Forms.FolderBrowserDialog] to select download directory...'
+        $DirectoryPrompt.Description = 'Select download path:'
+        'Opening [{0}] to select download path...' -f
+        $DirectoryPrompt.GetType().Name | Out-Host
         $Result = $DirectoryPrompt.ShowDialog() -eq [System.Windows.Forms.DialogResult]::OK
 
         if ($Result) {
@@ -352,11 +395,11 @@ function Get-MediaExtension {
     begin {
         $ExtVideo = @('mp4', 'mov', 'webm', 'flv')
         $ExtAudio = @('m4a', 'aac', 'mp3', 'ogg', 'opus', 'webm')
-        $Extension = $ExtVideo + $ExtAudio
     }
 
     process {
-        $Extension
+        $ExtVideo +
+        $ExtAudio
     }
 }
 function Select-FileDestination {

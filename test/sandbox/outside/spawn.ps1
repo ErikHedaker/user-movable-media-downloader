@@ -1,5 +1,4 @@
 param($ProjectRoot = $(throw 'ProjectRoot is required'))
-
 function New-SandboxContent {
     [CmdletBinding()]
     param(
@@ -32,7 +31,6 @@ function New-SandboxContent {
         "</Configuration>`n"
     }
 }
-
 function Export-SandboxFile {
     [CmdletBinding()]
     param(

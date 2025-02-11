@@ -1,30 +1,26 @@
-param($ProjectRoot = $(throw 'ProjectRoot is required'))
+param([string]$ProjectRoot = $(throw 'ProjectRoot parameter is required'))
 
 try {
     Set-Location $ProjectRoot
-    Set-Variable ErrorActionPreference Stop
+    Set-Variable ErrorActionPreference Inquire
     Set-Variable ProgressPreference SilentlyContinue
     . .\src\functions $ProjectRoot
     # .\test\src\reverse_initialization.ps1
     # .\test\src\clear_directory_downloads.ps1
     $Resource = Get-RequiredResource
 
-    if ($Resource | Test-CommandMissing) {
+    if ($Resource | Test-InvalidCommand) {
         Clear-HostApp
         "Starting installation...`n"
-        $tmp = Initialize-Directory '.\tmp' | Clear-Directory -PassThru
-        $lib = Initialize-Directory '.\lib' | Clear-Directory -PassThru
-        $Resource |
-            Request-Resource $tmp |
-                Expand-SpecificFiles |
-                    Move-SpecificFiles $lib |
-                        Add-EnvPathUser
-        Clear-Directory $tmp
+        $tmp = Initialize-Directory 'tmp' | Clear-Directory
+        $lib = Initialize-Directory 'lib' | Clear-Directory | Add-UserEnvPath
+        $Resource | Request-Resource $tmp | Expand-Resource | Move-Resource $lib
+        $tmp | Clear-Directory | Out-Null
     }
 
+    $History = @()
     $Directory = Get-UserDownloadDirectory
     $Arguments = Get-UserDownloadArguments
-    $History = @()
 
     while ($true) {
         Clear-HostApp
@@ -34,5 +30,5 @@ try {
         $History += $Output -join "`n" | Select-FileDestination
     }
 } catch {
-    "`nError:`n`n$_`n" | Exit-AppFailure
+    Exit-AppFailure $_
 }

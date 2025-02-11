@@ -1,1 +1,2 @@
-Write-Host "Script[$PSCommandPath]"
+'Script File[{0}]' -f
+$PSCommandPath | Out-Host
