@@ -1,2 +1,1 @@
-'Script File[{0}]' -f
-$PSCommandPath | Out-Host
+'Scriptfile[{0}]' -f $PSCommandPath | Out-Host

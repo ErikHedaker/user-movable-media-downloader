@@ -1,4 +1,4 @@
-param($ProjectRoot = $(throw 'ProjectRoot is required'))
+param([string]$ProjectRoot = $(throw 'ProjectRoot script parameter is required'))
 function New-SandboxContent {
     [CmdletBinding()]
     param(
@@ -28,7 +28,7 @@ function New-SandboxContent {
         "    <LogonCommand>`n" +
         "        <Command>$Command</Command>`n" +
         "    </LogonCommand>`n" +
-        "</Configuration>`n"
+        '</Configuration>'
     }
 }
 function Export-SandboxFile {
@@ -62,12 +62,33 @@ function Export-SandboxFile {
         $Path
     }
 }
+function Get-Command {
+    [CmdletBinding()]
+    param(
+        [Parameter(
+            Position = 0
+        )][string]$Index = 0
+    )
+
+    process {
+        @(
+            "explorer $SharedOutput\test\sandbox",
+            "start $SharedOutput\tests\sandbox\env_start.cmd",
+            "ping 127.0.0.1 -n 2 &amp; explorer $SharedOutput\tests\sandbox",
+            "ping -n 3 127.0.0.1 &gt; nul &amp; explorer $SharedOutput\tests\sandbox",
+            "timeout 5 && $SharedOutput\tests\sandbox\env_start.cmd",
+            "powershell.exe -ExecutionPolicy Bypass -Command '& { explorer $SharedOutput\tests\sandbox }'",
+            "powershell.exe -ExecutionPolicy Bypass -Command 'Invoke-Command -ScriptBlock { explorer C:\Users\WDAGUtilityAccount\Sandbox\AutoUserSetup\tests\sandbox }'",
+            "powershell -ExecutionPolicy Bypass $SharedOutput\tests\sandbox\env_start.cmd"
+        )[$Index]
+    }
+}
 
 try {
     Set-Location $ProjectRoot
-    Set-Variable ErrorActionPreference Stop
+    Set-Variable ErrorActionPreference Inquire
     Set-Variable ProgressPreference SilentlyContinue
-    'Script File[{0}]' -f $PSCommandPath | Out-Host
+    'Scriptfile[{0}]' -f $PSCommandPath | Out-Host
     Get-Process -Name 'WindowsSandboxRemoteSession*' |
         Stop-Process -Force -PassThru |
             ForEach-Object { 'Stopped Process[{0}]' -f $_.ProcessName } |
@@ -75,20 +96,7 @@ try {
     $ProjectName = Split-Path $ProjectRoot -Leaf
     $SharedInput = "$env:USERPROFILE\Sandbox\$ProjectName" + '_copy'
     $SharedOutput = "C:\Users\WDAGUtilityAccount\Downloads\$ProjectName"
-
-    $CommandTest = $(
-        "explorer $SharedOutput\test\sandbox",
-        "start $SharedOutput\tests\sandbox\env_start.cmd",
-        "ping 127.0.0.1 -n 2 &amp; explorer $SharedOutput\tests\sandbox",
-        "ping -n 3 127.0.0.1 &gt; nul &amp; explorer $SharedOutput\tests\sandbox",
-        "timeout 5 && $SharedOutput\tests\sandbox\env_start.cmd",
-        "powershell.exe -ExecutionPolicy Bypass -Command '& { explorer $SharedOutput\tests\sandbox }'",
-        "powershell.exe -ExecutionPolicy Bypass -Command 'Invoke-Command -ScriptBlock { explorer C:\Users\WDAGUtilityAccount\Sandbox\AutoUserSetup\tests\sandbox }'",
-        "powershell -ExecutionPolicy Bypass $SharedOutput\tests\sandbox\env_start.cmd"
-    )
-
-    $Command = $CommandTest[0]
-    $SandboxFile = New-SandboxContent $SharedInput $SharedOutput $Command |
+    $SandboxFile = New-SandboxContent $SharedInput $SharedOutput (Get-Command) |
         Export-SandboxFile 'test\sandbox\out\sandbox.wsb'
     & robocopy $ProjectRoot $SharedInput /MIR /XD .git docs /XF README.md
     & "$SharedInput\$SandboxFile"

@@ -1,4 +1,4 @@
-param([string]$ProjectRoot = $(throw 'ProjectRoot parameter is required'))
+param([string]$ProjectRoot = $(throw 'ProjectRoot script parameter is required'))
 function Exit-AppFailure {
     [CmdletBinding()]
     param(

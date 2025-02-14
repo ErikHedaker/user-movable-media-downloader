@@ -1,6 +1,6 @@
 @echo off
+echo Scriptfile[%~f0]
 cd /d %~dp0..\..
-echo Script File[%~f0]
 for %%d in ("%cd%") do set project=%%~nxd
 set destination=%USERPROFILE%\%project%
 robocopy . %destination% /E
