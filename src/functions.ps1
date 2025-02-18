@@ -33,7 +33,7 @@ function Exit-AppFailure {
 
         $Output | Write-Host -ForegroundColor DarkYellow
         Pause
-        [System.Environment]::Exit(0)
+        throw 'Exit'
     }
 }
 function Resolve-ProjectPath {
